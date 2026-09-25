@@ -13,12 +13,69 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export function runMigrations(sqlitePath = env.SQLITE_PATH): void {
   const sqlite = openSqlite(sqlitePath);
   const db = drizzle(sqlite);
-  backfillMigrationTimestamps(sqlite);
+  reconcileMigrationJournal(sqlite);
   const migrationsFolder = path.resolve(__dirname, "../../drizzle");
   migrate(db, { migrationsFolder });
   // Idempotent upgrades for DBs that applied an older 0000_init before hierarchy modes.
   ensureSchemaCompat(sqlite);
   sqlite.close();
+}
+
+/**
+ * Drizzle's sqlite migrator only looks at the LATEST journal row
+ * (ORDER BY created_at DESC LIMIT 1) and replays every migration file newer
+ * than it. So the journal must contain exactly the entries for migrations
+ * whose effects are already in the DB:
+ *
+ * - Old DBs: a single NULL-timestamp row (pre-timestamp drizzle) -> backfill
+ *   0000's timestamp so 0000 is not replayed.
+ * - Dev DBs that ran ensureSchemaCompat directly (name_zh/name_en and
+ *   inspection_records added without journaling 0001/0002) -> insert journal
+ *   rows for 0001/0002 so the migrator skips them instead of failing on
+ *   duplicate column / existing table.
+ */
+function reconcileMigrationJournal(sqlite: SqliteDatabase): void {
+  const hasJournal =
+    sqlite
+      .prepare(
+        `SELECT 1 AS ok FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations' LIMIT 1`,
+      )
+      .get() !== undefined;
+  if (!hasJournal) return;
+  // 0000_init_sqlite entry timestamp (see drizzle/meta/_journal.json).
+  sqlite.exec(
+    `UPDATE __drizzle_migrations SET created_at = 1785336518189 WHERE created_at IS NULL`,
+  );
+  journalAppliedMigration(sqlite, "0001", 1785336518190, () =>
+    hasPresetNameColumns(sqlite),
+  );
+  journalAppliedMigration(sqlite, "0002", 1790343281566, () =>
+    hasInspectionRecordsTable(sqlite),
+  );
+}
+
+function hasPresetNameColumns(sqlite: SqliteDatabase): boolean {
+  try {
+    return (sqlite.pragma(`table_info(layer_presets)`) as { name: string }[]).some(
+      (c) => c.name === "name_zh",
+    );
+  } catch {
+    return false;
+  }
+}
+
+function hasInspectionRecordsTable(sqlite: SqliteDatabase): boolean {
+  try {
+    return (
+      sqlite
+        .prepare(
+          `SELECT 1 AS ok FROM sqlite_master WHERE type = 'table' AND name = 'inspection_records' LIMIT 1`,
+        )
+        .get() !== undefined
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -60,18 +117,14 @@ function backfillMigrationTimestamps(sqlite: SqliteDatabase): void {
 /**
  * Record a journal entry for a migration whose effects are already present
  * (applied via ensureSchemaCompat on a dev DB). Finds the journal hash by
- * matching the migration tag in the drizzle meta folder.
+ * matching the snapshot file prefix (0001_/0002_) in the drizzle meta folder.
  */
 function journalAppliedMigration(
   sqlite: SqliteDatabase,
-  tag: string,
+  prefix: string,
   createdAt: number,
   isApplied: () => boolean,
 ): void {
-  const existing = sqlite
-    .prepare(`SELECT hash FROM __drizzle_migrations`)
-    .all() as { hash: string }[];
-  if (existing.length === 0) return;
   let applied = false;
   try {
     applied = isApplied();
@@ -79,6 +132,9 @@ function journalAppliedMigration(
     return;
   }
   if (!applied) return;
+  const existing = sqlite
+    .prepare(`SELECT hash FROM __drizzle_migrations`)
+    .all() as { hash: string }[];
   const hashes = new Set(existing.map((r) => r.hash));
   const metaDir = path.resolve(__dirname, "../../drizzle/meta");
   let metaFiles: string[] = [];
@@ -88,25 +144,14 @@ function journalAppliedMigration(
     return;
   }
   for (const file of metaFiles) {
+    if (!file.startsWith(prefix)) continue;
     let snapshot: { id?: string };
     try {
       snapshot = JSON.parse(fs.readFileSync(path.join(metaDir, file), "utf8"));
     } catch {
       continue;
     }
-    if (!snapshot.id || hashes.has(snapshot.id)) continue;
-    // Check the journal tag for this snapshot id.
-    const journalPath = path.join(metaDir, "_journal.json");
-    try {
-      const journal = JSON.parse(fs.readFileSync(journalPath, "utf8")) as {
-        entries: { tag: string }[];
-      };
-      void journal;
-    } catch {
-      continue;
-    }
-    // Simpler: match snapshot file prefix (0001_/0002_) against the tag.
-    if (!file.startsWith(tag.slice(0, 4))) continue;
+    if (!snapshot.id || hashes.has(snapshot.id)) return;
     sqlite.exec(
       `INSERT INTO __drizzle_migrations (hash, created_at) VALUES ('${snapshot.id}', ${createdAt})`,
     );
