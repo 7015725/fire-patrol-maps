@@ -31,6 +31,8 @@ export function FloorMapView({ floor, crumbs, presets }: FloorMapViewProps) {
     presets,
     FEATURE_TYPES,
   );
+  // Inspection mode is admin-only: FloorMapView stays read-only for visitors.
+  const [inspectionMode] = useState(false);
 
   useEffect(() => {
     if (selected && !activeTypes.has(selected.type)) {
@@ -71,8 +73,14 @@ export function FloorMapView({ floor, crumbs, presets }: FloorMapViewProps) {
               visibleTypes={activeTypes}
               onSelectFeature={setSelected}
               selectedFeatureId={selected?.id ?? null}
+              inspectionMode={inspectionMode}
             />
-            <FeaturePopup feature={selected} onClose={() => setSelected(null)} />
+            <FeaturePopup
+              feature={selected}
+              onClose={() => setSelected(null)}
+              inspectionMonth={floor.inspectionMonth ?? null}
+              inspectionMode={inspectionMode}
+            />
           </div>
           <div className="map-sidebar">
             <LayerPanel

@@ -132,5 +132,26 @@
     "rect": "矩形",
     "polygon": "多边形",
     "circle": "圆形"
-  }
+  },
+  "inspectionMode": "月检模式",
+  "inspectionModeOn": "月检中",
+  "inspectionProgress": "本月已检 {{inspected}} / {{total}}",
+  "inspectionHistory": "巡检记录",
+  "inspection": {
+    "uninspected": "本月未检",
+    "ok": "本月已检 · 正常",
+    "fault": "本月已检 · 异常"
+  },
+  "inspectionMarkOk": "标记正常",
+  "inspectionMarkFault": "标记异常",
+  "inspectionClear": "撤销标记",
+  "inspectionNotePlaceholder": "备注（异常时必填，如压力不足、过期）",
+  "inspectionNoteRequired": "异常标记需要填写备注说明",
+  "inspectionMonth": "月份",
+  "inspectionFilter": "筛选",
+  "inspectionFilterAll": "全部",
+  "inspectionFilterFault": "只看异常",
+  "inspectionFilterUninspected": "只看未检",
+  "inspectionEmpty": "本月暂无巡检记录",
+  "errorSave": "保存失败，请重试。"
 }

@@ -132,5 +132,26 @@
     "rect": "Rectangle",
     "polygon": "Polygon",
     "circle": "Circle"
-  }
+  },
+  "inspectionMode": "Inspection mode",
+  "inspectionModeOn": "Inspecting",
+  "inspectionProgress": "Inspected {{inspected}} / {{total}} this month",
+  "inspectionHistory": "Inspection log",
+  "inspection": {
+    "uninspected": "Uninspected this month",
+    "ok": "Inspected · OK",
+    "fault": "Inspected · Fault"
+  },
+  "inspectionMarkOk": "Mark OK",
+  "inspectionMarkFault": "Mark fault",
+  "inspectionClear": "Clear mark",
+  "inspectionNotePlaceholder": "Note (required for fault)",
+  "inspectionNoteRequired": "A note is required when marking a fault",
+  "inspectionMonth": "Month",
+  "inspectionFilter": "Filter",
+  "inspectionFilterAll": "All",
+  "inspectionFilterFault": "Faults only",
+  "inspectionFilterUninspected": "Uninspected only",
+  "inspectionEmpty": "No inspection records this month",
+  "errorSave": "Save failed, please retry."
 }

@@ -118,6 +118,33 @@ export const featureMedia = sqliteTable("feature_media", {
   createdAt: createdAtColumn(),
 });
 
+/**
+ * Monthly inspection mark per feature (personal use, no photos).
+ * One row per (feature, month). month format: "YYYY-MM".
+ * status: "ok" (normal) | "fault" (abnormal).
+ */
+export const inspectionRecords = sqliteTable(
+  "inspection_records",
+  {
+    id: idColumn(),
+    featureId: text("feature_id")
+      .notNull()
+      .references(() => features.id, { onDelete: "cascade" }),
+    /** "YYYY-MM", e.g. "2026-09". */
+    month: text("month").notNull(),
+    /** "ok" | "fault". */
+    status: text("status").notNull(),
+    /** Optional note, required by API validation when status is fault. */
+    note: text("note"),
+    createdAt: createdAtColumn(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date())
+      .$onUpdateFn(() => new Date()),
+  },
+  (t) => [unique("inspection_records_feature_month_unique").on(t.featureId, t.month)],
+);
+
 export const adminUsers = sqliteTable("admin_users", {
   id: idColumn(),
   username: text("username").notNull().unique(),

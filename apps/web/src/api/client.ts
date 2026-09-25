@@ -7,6 +7,7 @@ import type {
   FeatureType,
   FloorDetail,
   FloorPlan,
+  InspectionProgress,
   LayerPreset,
   MapFeature,
   PresetsResponse,
@@ -387,5 +388,31 @@ export const api = {
     return requestJson<{ ok: true }>(`/api/admin/presets/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
+  },
+
+  // --- Monthly inspections (personal use) ---
+
+  markInspection(input: {
+    featureId: string;
+    status: "ok" | "fault";
+    note?: string | null;
+    month?: string;
+  }): Promise<{ id: string; featureId: string; month: string; status: "ok" | "fault"; note: string | null }> {
+    return requestJson(`/api/admin/inspections`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
+  clearInspection(featureId: string, month?: string): Promise<{ ok: boolean; id: string }> {
+    const qs = month ? `?month=${encodeURIComponent(month)}` : "";
+    return requestJson(`/api/admin/inspections/${encodeURIComponent(featureId)}${qs}`, {
+      method: "DELETE",
+    });
+  },
+
+  getInspectionProgress(month?: string): Promise<InspectionProgress> {
+    const qs = month ? `?month=${encodeURIComponent(month)}` : "";
+    return requestJson<InspectionProgress>(`/api/admin/inspections/progress${qs}`);
   },
 };

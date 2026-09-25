@@ -119,6 +119,12 @@ export function AdminLayout() {
               {t("layerPresets")}
             </NavLink>
             <NavLink
+              to="/admin/inspections"
+              className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+            >
+              {t("inspectionHistory")}
+            </NavLink>
+            <NavLink
               to="/admin/settings"
               className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
             >

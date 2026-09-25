@@ -6,6 +6,7 @@ import { CampusPage } from "./pages/CampusPage";
 import { MiddleSegmentPage } from "./pages/MiddleSegmentPage";
 import { AdminLayout } from "./pages/admin/AdminLayout";
 import { FloorEditorPage } from "./pages/admin/FloorEditorPage";
+import { InspectionsPage } from "./pages/admin/InspectionsPage";
 import { LoginPage } from "./pages/admin/LoginPage";
 import { PresetsPage } from "./pages/admin/PresetsPage";
 import { SettingsPage } from "./pages/admin/SettingsPage";
@@ -22,6 +23,7 @@ export function App() {
           <Route index element={<StructurePage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="presets" element={<PresetsPage />} />
+          <Route path="inspections" element={<InspectionsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="floors/:floorId" element={<FloorEditorPage />} />
         </Route>

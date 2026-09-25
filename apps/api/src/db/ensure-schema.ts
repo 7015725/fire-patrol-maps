@@ -51,6 +51,8 @@ export function ensureSchemaCompat(sqlite: SqliteDatabase): void {
   ensureFeatureSortOrder(sqlite);
   // Admin custom preset display names (post-0.9 deploy upgrade).
   ensurePresetNameColumns(sqlite);
+  // Monthly inspection records (post-0.10 deploy upgrade).
+  ensureInspectionRecordsTable(sqlite);
 
   if (!tableExists(sqlite, "floors")) {
     return;
@@ -153,6 +155,35 @@ function ensurePresetNameColumns(sqlite: SqliteDatabase): void {
   if (!hasColumn(sqlite, "layer_presets", "name_en")) {
     sqlite.exec(`ALTER TABLE layer_presets ADD COLUMN name_en text`);
   }
+}
+
+/**
+ * Create inspection_records on DBs created before 0.10.
+ * One row per (feature, month); deleted with the feature (cascade).
+ */
+function ensureInspectionRecordsTable(sqlite: SqliteDatabase): void {
+  if (!tableExists(sqlite, "features")) {
+    return;
+  }
+  if (tableExists(sqlite, "inspection_records")) {
+    return;
+  }
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS inspection_records (
+      id text PRIMARY KEY NOT NULL,
+      feature_id text NOT NULL,
+      month text NOT NULL,
+      status text NOT NULL,
+      note text,
+      created_at integer NOT NULL,
+      updated_at integer NOT NULL,
+      FOREIGN KEY (feature_id) REFERENCES features(id) ON UPDATE no action ON DELETE cascade
+    );
+  `);
+  sqlite.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS inspection_records_feature_month_unique
+      ON inspection_records (feature_id, month);
+  `);
 }
 
 function ensureFeatureMediaTable(sqlite: SqliteDatabase): void {

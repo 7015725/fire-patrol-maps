@@ -322,4 +322,63 @@ describe("ensureSchemaCompat", () => {
     ensureSchemaCompat(sqlite);
     sqlite.close();
   });
+
+  it("creates inspection_records on 0.9-era DBs without the table", () => {
+    const sqlite = new Database(":memory:");
+    sqlite.pragma("foreign_keys = ON");
+    sqlite.exec(`
+      CREATE TABLE campuses (
+        id text PRIMARY KEY NOT NULL,
+        name text NOT NULL,
+        slug text NOT NULL,
+        sort_order integer DEFAULT 0 NOT NULL,
+        hierarchy_mode text NOT NULL DEFAULT 'full'
+      );
+      CREATE TABLE features (
+        id text PRIMARY KEY NOT NULL,
+        floor_id text NOT NULL,
+        type text NOT NULL,
+        geometry text NOT NULL,
+        label text,
+        notes text,
+        created_at integer NOT NULL,
+        updated_at integer NOT NULL,
+        sort_order integer DEFAULT 0 NOT NULL
+      );
+    `);
+
+    const tables = () =>
+      (sqlite
+        .prepare(
+          `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'inspection_records'`,
+        )
+        .all() as { name: string }[]).map((r) => r.name);
+    expect(tables()).toEqual([]);
+
+    ensureSchemaCompat(sqlite);
+    expect(tables()).toEqual(["inspection_records"]);
+
+    const cols = sqlite.pragma("table_info(inspection_records)") as { name: string }[];
+    for (const name of ["feature_id", "month", "status", "note"]) {
+      expect(cols.some((c) => c.name === name)).toBe(true);
+    }
+
+    // Unique (feature, month) enforced.
+    sqlite.exec(`
+      INSERT INTO features (id, floor_id, type, geometry, created_at, updated_at, sort_order)
+        VALUES ('f1', 'floor-1', 'fire_extinguisher', '{"type":"point","x":0.5,"y":0.5}', 1, 1, 0);
+      INSERT INTO inspection_records (id, feature_id, month, status, created_at, updated_at)
+        VALUES ('r1', 'f1', '2026-09', 'ok', 1, 1);
+    `);
+    expect(() =>
+      sqlite.exec(`
+        INSERT INTO inspection_records (id, feature_id, month, status, created_at, updated_at)
+          VALUES ('r2', 'f1', '2026-09', 'fault', 2, 2);
+      `),
+    ).toThrow();
+
+    // Idempotent: second pass is a no-op.
+    ensureSchemaCompat(sqlite);
+    sqlite.close();
+  });
 });

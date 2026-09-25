@@ -17,7 +17,7 @@ import {
   radiusFromCenter,
   translatePolygon,
 } from "../lib/geometry";
-import { colorForType } from "../lib/featureStyle";
+import { colorForType, inspectionBadge, inspectionBadgeColor } from "../lib/featureStyle";
 import { screenSpaceMarkerTransform, screenSpacePlanUnits } from "../lib/screenSpace";
 
 export type MapCanvasProps = {
@@ -31,6 +31,12 @@ export type MapCanvasProps = {
   visibleTypes: Set<string>;
   onSelectFeature: (feature: MapFeature | null) => void;
   selectedFeatureId?: string | null;
+  /**
+   * When true, point markers show an inspection badge ring:
+   * grey dashed = uninspected, green = ok, red = fault.
+   * Polygon/circle features keep their fill (badge shown in popup instead).
+   */
+  inspectionMode?: boolean;
   /**
    * Called when the user clicks the plan (not a pan, not a feature marker).
    * Coordinates are normalized 0–1 relative to the plan box (origin top-left).
@@ -80,6 +86,7 @@ export function MapCanvas({
   visibleTypes,
   onSelectFeature,
   selectedFeatureId = null,
+  inspectionMode = false,
   onPlanClick,
   draftPolygonPoints,
   draftCircle = null,
@@ -658,6 +665,10 @@ export function MapCanvas({
             }
 
             if (isPointGeometry(geom)) {
+              const badge = inspectionMode ? inspectionBadge(feature.inspection) : null;
+              const badgeColor = inspectionMode
+                ? inspectionBadgeColor(feature.inspection)
+                : color;
               return (
                 <button
                   key={feature.id}
@@ -679,12 +690,19 @@ export function MapCanvas({
                     width: selected ? 22 : 18,
                     height: selected ? 22 : 18,
                     borderRadius: "50%",
-                    border: selected ? "3px solid #111" : "2px solid #fff",
-                    background: color,
+                    border:
+                      badge === "uninspected"
+                        ? `3px dashed ${badgeColor}`
+                        : badge
+                          ? `3px solid ${badgeColor}`
+                          : selected
+                            ? "3px solid #111"
+                            : "2px solid #fff",
+                    background: badge === "ok" || badge === "fault" ? badgeColor : color,
                     boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
                     padding: 0,
                     cursor: editable ? "grab" : "pointer",
-                    zIndex: z,
+                    zIndex: badge === "fault" ? z + 100 : z,
                   }}
                 />
               );

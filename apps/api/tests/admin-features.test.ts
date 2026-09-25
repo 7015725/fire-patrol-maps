@@ -523,4 +523,83 @@ describe("admin features, users, and presets", () => {
       }
     }
   });
+
+  it("marks inspections ok/fault, requires note on fault, tracks progress", async () => {
+    const json = (body: unknown) => ({
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify(body),
+    });
+
+    const featureId = createdFeatureIds[0]!;
+
+    // fault without note rejected.
+    const noNote = await app.request("/api/admin/inspections", json({
+      featureId,
+      month: "2026-09",
+      status: "fault",
+    }));
+    expect(noNote.status).toBe(400);
+
+    // mark ok.
+    const ok = await app.request("/api/admin/inspections", json({
+      featureId,
+      month: "2026-09",
+      status: "ok",
+      note: "压力正常",
+    }));
+    expect(ok.status).toBe(201);
+    const okBody = (await ok.json()) as { status: string; month: string; note: string };
+    expect(okBody.status).toBe("ok");
+    expect(okBody.month).toBe("2026-09");
+
+    // same month re-mark updates (upsert, not duplicate).
+    const fault = await app.request("/api/admin/inspections", json({
+      featureId,
+      month: "2026-09",
+      status: "fault",
+      note: "压力不足",
+    }));
+    expect(fault.status).toBe(200);
+    expect(((await fault.json()) as { status: string }).status).toBe("fault");
+
+    // progress reflects the mark.
+    const progress = await app.request("/api/admin/inspections/progress?month=2026-09", {
+      headers: { Cookie: cookie },
+    });
+    expect(progress.status).toBe(200);
+    const progressBody = (await progress.json()) as {
+      month: string;
+      total: number;
+      inspected: number;
+      faults: { featureId: string; note: string }[];
+    };
+    expect(progressBody.month).toBe("2026-09");
+    expect(progressBody.inspected).toBeGreaterThanOrEqual(1);
+    expect(progressBody.faults.some((f) => f.featureId === featureId)).toBe(true);
+
+    // floor payload carries the mark.
+    const floorRes = await app.request(`/api/floors/${floorId}`, {
+      headers: { Cookie: cookie },
+    });
+    expect(floorRes.status).toBe(200);
+    const floorBody = (await floorRes.json()) as {
+      inspectionMonth: string;
+      features: { id: string; inspection: { status: string; note: string } | null }[];
+    };
+    expect(typeof floorBody.inspectionMonth).toBe("string");
+    const marked = floorBody.features.find((f) => f.id === featureId);
+    // inspectionMonth is the server current month; only assert when it matches test month.
+    if (floorBody.inspectionMonth === "2026-09") {
+      expect(marked?.inspection?.status).toBe("fault");
+      expect(marked?.inspection?.note).toBe("压力不足");
+    }
+
+    // clear back to uninspected.
+    const cleared = await app.request(
+      `/api/admin/inspections/${featureId}?month=2026-09`,
+      { method: "DELETE", headers: { Cookie: cookie } },
+    );
+    expect(cleared.status).toBe(200);
+  });
 });

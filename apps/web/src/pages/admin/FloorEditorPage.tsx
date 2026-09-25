@@ -9,6 +9,7 @@ import {
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/client";
+import { FeaturePopup } from "../../components/FeaturePopup";
 import { MapCanvas } from "../../components/MapCanvas";
 import { shouldHandleFeatureDeleteKey } from "../../lib/editorKeys";
 import { radiusFromCenter, rectanglePoints } from "../../lib/geometry";
@@ -33,6 +34,12 @@ export function FloorEditorPage() {
   const [tool, setTool] = useState<Tool>("select");
   const [featureType, setFeatureType] = useState<FeatureType>("exit");
   const [selected, setSelected] = useState<MapFeature | null>(null);
+  const [inspectionMode, setInspectionMode] = useState(false);
+  const [inspectionProgress, setInspectionProgress] = useState<{
+    total: number;
+    inspected: number;
+    uninspected: number;
+  } | null>(null);
   const [draftPoints, setDraftPoints] = useState<[number, number][]>([]);
   const [savedFlash, setSavedFlash] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -482,6 +489,48 @@ export function FloorEditorPage() {
     setSelected(feature);
   }
 
+  /** Refresh current-month inspection marks after mark/clear (single source: server). */
+  async function refreshInspection() {
+    try {
+      const data = await api.getFloorById(floorId);
+      setFloor(data);
+      setSelected((prev) =>
+        prev ? (data.features.find((f) => f.id === prev.id) ?? null) : prev,
+      );
+      const total = data.features.length;
+      const inspected = data.features.filter((f) => f.inspection).length;
+      setInspectionProgress({ total, inspected, uninspected: total - inspected });
+    } catch {
+      /* keep stale marks on transient failure */
+    }
+  }
+
+  // Keep the progress bar fresh when entering inspection mode or switching floors.
+  useEffect(() => {
+    if (!inspectionMode || !floor) return;
+    const total = floor.features.length;
+    const inspected = floor.features.filter((f) => f.inspection).length;
+    setInspectionProgress({ total, inspected, uninspected: total - inspected });
+  }, [inspectionMode, floor]);
+
+  async function onMarkInspection(feature: MapFeature, status: "ok" | "fault", note: string) {
+    try {
+      await api.markInspection({ featureId: feature.id, status, note: note || null });
+    } catch (err: unknown) {
+      throw new Error(err instanceof Error ? err.message : t("errorSave"));
+    }
+    await refreshInspection();
+  }
+
+  async function onClearInspection(feature: MapFeature) {
+    try {
+      await api.clearInspection(feature.id);
+    } catch (err: unknown) {
+      throw new Error(err instanceof Error ? err.message : t("errorSave"));
+    }
+    await refreshInspection();
+  }
+
   if (error && !floor) {
     return <p role="alert">{error}</p>;
   }
@@ -517,6 +566,31 @@ export function FloorEditorPage() {
 
       <div className="card">
         <div className="row row-tight" role="group" aria-label="Tools">
+          {inspectionMode ? (
+            <span className="badge badge-ok">{t("inspectionModeOn")}</span>
+          ) : null}
+          {inspectionProgress && inspectionMode ? (
+            <span className="small muted">
+              {t("inspectionProgress", {
+                inspected: inspectionProgress.inspected,
+                total: inspectionProgress.total,
+              })}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setInspectionMode((v) => !v)}
+            className={inspectionMode ? "tool-btn active" : "tool-btn"}
+          >
+            {t("inspectionMode")}
+          </button>
+          {inspectionMode ? (
+            <Link to="/admin/inspections" className="btn btn-sm">
+              {t("inspectionHistory")}
+            </Link>
+          ) : null}
+        </div>
+        <div className="row row-tight" role="group" aria-label="Draw tools">
           {(["select", "pin", "rect", "polygon", "circle"] as Tool[]).map((value) => (
             <button
               key={value}
@@ -641,7 +715,8 @@ export function FloorEditorPage() {
               visibleTypes={allTypes}
               onSelectFeature={onSelectFeature}
               selectedFeatureId={selected?.id ?? null}
-              onPlanClick={onPlanClick}
+              onPlanClick={inspectionMode ? undefined : onPlanClick}
+              inspectionMode={inspectionMode}
               draftPolygonPoints={draftPoints}
               draftCircle={
                 tool === "circle" && draftPoints.length === 1
@@ -652,6 +727,14 @@ export function FloorEditorPage() {
               editable
               onGeometryChange={applyLocalGeometry}
               onGeometryCommit={(id, geom) => void commitGeometry(id, geom)}
+            />
+            <FeaturePopup
+              feature={inspectionMode ? selected : null}
+              onClose={() => setSelected(null)}
+              inspectionMonth={floor.inspectionMonth ?? null}
+              inspectionMode={inspectionMode}
+              onMarkInspection={onMarkInspection}
+              onClearInspection={onClearInspection}
             />
           </div>
 

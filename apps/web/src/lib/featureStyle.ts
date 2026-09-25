@@ -1,4 +1,4 @@
-import type { LayerPreset } from "../types";
+import type { InspectionMark, LayerPreset } from "../types";
 
 /** Stable colors for feature types (public map + legend). */
 export const FEATURE_TYPE_COLORS: Record<string, string> = {
@@ -56,4 +56,23 @@ export function presetDisplayName(
   const other = lang.startsWith("zh") ? preset.nameEn : preset.nameZh;
   if (other && other.trim().length > 0) return other;
   return t(`presets.${preset.slug}`, { defaultValue: preset.slug });
+}
+
+/** Inspection states shown only in inspection mode. */
+export type InspectionBadge = "uninspected" | "ok" | "fault";
+
+export function inspectionBadge(mark?: InspectionMark | null): InspectionBadge {
+  if (!mark) return "uninspected";
+  return mark.status === "fault" ? "fault" : "ok";
+}
+
+/** Badge colors: grey = uninspected, green = ok, red = fault. */
+export const INSPECTION_BADGE_COLORS: Record<InspectionBadge, string> = {
+  uninspected: "#9ca3af",
+  ok: "#16a34a",
+  fault: "#dc2626",
+};
+
+export function inspectionBadgeColor(mark?: InspectionMark | null): string {
+  return INSPECTION_BADGE_COLORS[inspectionBadge(mark)];
 }

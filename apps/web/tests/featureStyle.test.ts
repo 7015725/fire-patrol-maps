@@ -3,6 +3,8 @@ import { FEATURE_TYPES, type LayerPreset } from "../src/types";
 import {
   FEATURE_TYPE_COLORS,
   colorForType,
+  inspectionBadge,
+  inspectionBadgeColor,
   presetDisplayName,
 } from "../src/lib/featureStyle";
 
@@ -49,5 +51,15 @@ describe("featureStyle", () => {
         t,
       ),
     ).toBe("custom-abc");
+  });
+
+  it("maps inspection marks to grey/green/red badges", () => {
+    expect(inspectionBadge(null)).toBe("uninspected");
+    expect(inspectionBadge(undefined)).toBe("uninspected");
+    expect(inspectionBadge({ status: "ok", note: null, month: "2026-09", updatedAt: "" })).toBe("ok");
+    expect(inspectionBadge({ status: "fault", note: "x", month: "2026-09", updatedAt: "" })).toBe("fault");
+    expect(inspectionBadgeColor(null)).toBe("#9ca3af");
+    expect(inspectionBadgeColor({ status: "ok", note: null, month: "2026-09", updatedAt: "" })).toBe("#16a34a");
+    expect(inspectionBadgeColor({ status: "fault", note: "x", month: "2026-09", updatedAt: "" })).toBe("#dc2626");
   });
 });

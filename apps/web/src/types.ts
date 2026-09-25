@@ -104,6 +104,13 @@ export type FeatureMedia = {
   createdAt: string;
 };
 
+export type InspectionMark = {
+  status: "ok" | "fault";
+  note: string | null;
+  month: string;
+  updatedAt: string;
+};
+
 export type MapFeature = {
   id: string;
   type: string;
@@ -115,6 +122,8 @@ export type MapFeature = {
   updatedAt: string;
   /** Present on floor detail payloads; omitted from create/patch responses. */
   media?: FeatureMedia[];
+  /** Null = uninspected this month. Present on floor detail payloads. */
+  inspection?: InspectionMark | null;
 };
 
 export type FloorPlan = {
@@ -129,6 +138,8 @@ export type FloorPlan = {
 export type FloorDetail = FloorSummary & {
   plan: FloorPlan | null;
   features: MapFeature[];
+  /** Current-month key, e.g. "2026-09". */
+  inspectionMonth?: string;
 };
 
 export type LayerPreset = {
@@ -140,6 +151,22 @@ export type LayerPreset = {
   nameEn: string | null;
   featureTypes: string[];
   sortOrder: number;
+};
+
+export type InspectionProgress = {
+  month: string;
+  total: number;
+  inspected: number;
+  uninspected: number;
+  faults: Array<{
+    id: string;
+    featureId: string;
+    month: string;
+    status: "ok" | "fault";
+    note: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }>;
 };
 
 export type PresetsResponse = {
