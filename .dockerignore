@@ -1,0 +1,8 @@
+# Keep the build context small and never leak host artifacts into the image.
+node_modules
+**/node_modules
+**/dist
+data
+.git
+.env
+*.log
