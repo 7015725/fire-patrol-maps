@@ -1235,6 +1235,13 @@ input[type="file"]::file-selector-button {
     grid-template-columns: 1fr;
   }
 
+  /* Mobile: map fills the visible screen height minus header/chrome. */
+  .map-stage {
+    height: calc(100dvh - 220px) !important;
+    min-height: 320px !important;
+    max-height: 70dvh;
+  }
+
   .map-sidebar {
     position: static;
     display: contents;
@@ -1261,5 +1268,12 @@ input[type="file"]::file-selector-button {
 
   .floor-editor-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  /* Admin editor map on mobile: fit viewport, not a fixed 640px box. */
+  .floor-editor-grid > div:first-child {
+    height: calc(100dvh - 260px) !important;
+    min-height: 300px !important;
+    max-height: 62dvh;
   }
 }
