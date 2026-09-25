@@ -12,6 +12,11 @@ Container images: `ghcr.io/ajthom90/facility-maps:<version>` (see README).
 
 ## [Unreleased]
 
+## [0.10.1] — 2026-09-26
+
+### Fixed
+- 手机端地图自适应高度：公共地图与后台编辑器按视口（dvh）计算高度，不再是固定 640px 盒子，小屏不再超出。
+
 ## [0.10.0] — 2026-09-25
 
 ### Added
