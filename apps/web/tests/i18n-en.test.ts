@@ -9,6 +9,9 @@ const FEATURE_TYPES = [
   "fire_extinguisher",
   "fire_hydrant",
   "fire_alarm_pull",
+  "electrical_fire_controller",
+  "gas_suppression_controller",
+  "water_gong",
   "aed",
   "first_aid",
   "eye_wash",
@@ -30,6 +33,8 @@ const FEATURE_TYPES = [
   "confined_space",
   "sds_station",
   "room_label",
+  "elevator_lobby",
+  "freight_elevator",
 ] as const;
 
 /** Mirrors apps/api/src/lib/feature-types.ts PRESET_SEEDS slugs */

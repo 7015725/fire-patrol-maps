@@ -6,6 +6,9 @@ export const FEATURE_TYPE_COLORS: Record<string, string> = {
   fire_extinguisher: "#dc2626",
   fire_hydrant: "#991b1b",
   fire_alarm_pull: "#b91c1c",
+  electrical_fire_controller: "#f59e0b",
+  gas_suppression_controller: "#14b8a6",
+  water_gong: "#0369a1",
   aed: "#be123c",
   first_aid: "#e11d48",
   eye_wash: "#0891b2",
@@ -27,6 +30,8 @@ export const FEATURE_TYPE_COLORS: Record<string, string> = {
   confined_space: "#9a3412",
   sds_station: "#6d28d9",
   room_label: "#64748b",
+  elevator_lobby: "#8b5cf6",
+  freight_elevator: "#78716c",
 };
 
 export function colorForType(type: string): string {

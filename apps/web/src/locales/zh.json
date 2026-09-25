@@ -34,6 +34,9 @@
     "assembly_point": "紧急集合点（Code Red）",
     "safe_haven": "避险集合点（Code White）",
     "fire_alarm_pull": "手动火灾报警按钮",
+    "electrical_fire_controller": "电气火灾控制器",
+    "gas_suppression_controller": "七氟丙烷灭火控制器",
+    "water_gong": "水力警铃",
     "aed": "AED（自动体外除颤器）",
     "first_aid": "急救箱",
     "eye_wash": "洗眼器",
@@ -54,7 +57,9 @@
     "smoke_detector": "感烟探测器",
     "confined_space": "有限空间",
     "sds_station": "SDS 安全数据表站",
-    "room_label": "房间标注"
+    "room_label": "房间标注",
+    "elevator_lobby": "电梯厅",
+    "freight_elevator": "货梯"
   },
   "login": "登录",
   "logout": "退出登录",

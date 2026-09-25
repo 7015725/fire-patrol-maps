@@ -10,6 +10,9 @@ export const FEATURE_TYPES = [
   "assembly_point",
   "safe_haven",
   "fire_alarm_pull",
+  "electrical_fire_controller",
+  "gas_suppression_controller",
+  "water_gong",
   "aed",
   "first_aid",
   "eye_wash",
@@ -34,6 +37,8 @@ export const FEATURE_TYPES = [
   "sds_station",
   // Non-safety annotations
   "room_label",
+  "elevator_lobby",
+  "freight_elevator",
 ] as const;
 
 export type FeatureType = (typeof FEATURE_TYPES)[number];
@@ -64,6 +69,9 @@ export const PRESET_SEEDS: {
       "fire_hydrant",
       "exit",
       "fire_alarm_pull",
+      "electrical_fire_controller",
+      "gas_suppression_controller",
+      "water_gong",
       "electrical_panel",
       "gas_shutoff",
       "flammable_storage",
@@ -122,6 +130,6 @@ export const PRESET_SEEDS: {
   {
     slug: "rooms",
     sortOrder: 7,
-    featureTypes: ["room_label"],
+    featureTypes: ["room_label", "elevator_lobby", "freight_elevator"],
   },
 ];

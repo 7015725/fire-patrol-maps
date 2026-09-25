@@ -34,6 +34,9 @@
     "assembly_point": "Code Red meeting",
     "safe_haven": "Code White meeting",
     "fire_alarm_pull": "Fire alarm pull station",
+    "electrical_fire_controller": "Electrical fire controller",
+    "gas_suppression_controller": "Gas suppression controller",
+    "water_gong": "Water gong",
     "aed": "AED",
     "first_aid": "First aid",
     "eye_wash": "Eye wash",
@@ -54,7 +57,9 @@
     "smoke_detector": "Smoke detector",
     "confined_space": "Confined space",
     "sds_station": "SDS station",
-    "room_label": "Room label"
+    "room_label": "Room label",
+    "elevator_lobby": "Elevator lobby",
+    "freight_elevator": "Freight elevator"
   },
   "login": "Log in",
   "logout": "Log out",

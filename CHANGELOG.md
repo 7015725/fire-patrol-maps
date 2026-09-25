@@ -12,6 +12,11 @@ Container images: `ghcr.io/ajthom90/facility-maps:<version>` (see README).
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-09-25
+
+### Added
+- 5 种新标记类型：电气火灾控制器（`electrical_fire_controller`）、七氟丙烷灭火控制器（`gas_suppression_controller`）、水力警铃（`water_gong`），纳入 `fire_response` 预设；电梯厅（`elevator_lobby`）、货梯（`freight_elevator`），纳入 `rooms` 预设 — 通过启动预设刷新自动应用到已有部署。
+
 ## [0.7.0] — 2026-08-13
 
 ### Added

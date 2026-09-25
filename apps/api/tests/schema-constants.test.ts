@@ -11,6 +11,9 @@ describe("feature type catalog", () => {
         "assembly_point",
         "safe_haven",
         "fire_alarm_pull",
+        "electrical_fire_controller",
+        "gas_suppression_controller",
+        "water_gong",
         "aed",
         "first_aid",
         "eye_wash",
@@ -32,9 +35,11 @@ describe("feature type catalog", () => {
         "confined_space",
         "sds_station",
         "room_label",
+        "elevator_lobby",
+        "freight_elevator",
       ])
     );
-    expect(FEATURE_TYPES).toHaveLength(27);
+    expect(FEATURE_TYPES).toHaveLength(32);
     // No duplicates
     expect(new Set(FEATURE_TYPES).size).toBe(FEATURE_TYPES.length);
   });
