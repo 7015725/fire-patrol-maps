@@ -12,6 +12,11 @@ Container images: `ghcr.io/ajthom90/facility-maps:<version>` (see README).
 
 ## [Unreleased]
 
+## [0.8.1] — 2026-09-25
+
+### Fixed
+- 七氟丙烷灭火控制器配色改为深紫（`#7e22ce`），与屋顶通道的青色拉开区分。
+
 ## [0.8.0] — 2026-09-25
 
 ### Added
