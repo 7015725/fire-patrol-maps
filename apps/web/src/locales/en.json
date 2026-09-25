@@ -31,6 +31,7 @@
   "featureTypes": {
     "fire_extinguisher": "Fire extinguisher",
     "fire_hydrant": "Fire hydrant",
+    "extinguisher_hydrant_combo": "Extinguisher + hydrant",
     "exit": "Exit",
     "assembly_point": "Code Red meeting",
     "safe_haven": "Code White meeting",
@@ -134,6 +135,7 @@
     "circle": "Circle"
   },
   "inspectionMode": "Inspection mode",
+  "startInspection": "Start inspection",
   "inspectionModeOn": "Inspecting",
   "inspectionProgress": "Inspected {{inspected}} / {{total}} this month",
   "inspectionHistory": "Inspection log",

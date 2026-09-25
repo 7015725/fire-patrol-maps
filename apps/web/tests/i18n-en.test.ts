@@ -8,6 +8,7 @@ const FEATURE_TYPES = [
   "safe_haven",
   "fire_extinguisher",
   "fire_hydrant",
+  "extinguisher_hydrant_combo",
   "fire_alarm_pull",
   "electrical_fire_controller",
   "gas_suppression_controller",

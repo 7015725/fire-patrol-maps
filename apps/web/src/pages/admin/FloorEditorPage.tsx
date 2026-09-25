@@ -6,7 +6,7 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/client";
 import { FeaturePopup } from "../../components/FeaturePopup";
@@ -34,7 +34,11 @@ export function FloorEditorPage() {
   const [tool, setTool] = useState<Tool>("select");
   const [featureType, setFeatureType] = useState<FeatureType>("exit");
   const [selected, setSelected] = useState<MapFeature | null>(null);
-  const [inspectionMode, setInspectionMode] = useState(false);
+  const [searchParams] = useSearchParams();
+  // Direct entry from Structure page (?inspect=1) starts in inspection mode.
+  const [inspectionMode, setInspectionMode] = useState(
+    () => searchParams.get("inspect") === "1",
+  );
   const [inspectionProgress, setInspectionProgress] = useState<{
     total: number;
     inspected: number;
@@ -198,6 +202,7 @@ export function FloorEditorPage() {
             floorId,
             type: featureType,
             geometry: { type: "point", x: coords.x, y: coords.y },
+            label: nextAutoLabel(featureType),
             sortOrder: nextSortOrder(),
           });
           addFeature(created);
@@ -225,6 +230,7 @@ export function FloorEditorPage() {
             floorId,
             type: featureType,
             geometry: { type: "polygon", points },
+            label: nextAutoLabel(featureType),
             sortOrder: nextSortOrder(),
           });
           addFeature(created);
@@ -258,6 +264,7 @@ export function FloorEditorPage() {
             floorId,
             type: featureType,
             geometry: { type: "circle", x: cx, y: cy, r },
+            label: nextAutoLabel(featureType),
             sortOrder: nextSortOrder(),
           });
           addFeature(created);
@@ -295,6 +302,7 @@ export function FloorEditorPage() {
         floorId,
         type: featureType,
         geometry: { type: "polygon", points },
+        label: nextAutoLabel(featureType),
         sortOrder: nextSortOrder(),
       });
       addFeature(created);
@@ -314,6 +322,26 @@ export function FloorEditorPage() {
   function nextSortOrder(): number {
     const orders = floor?.features.map((f) => f.sortOrder ?? 0) ?? [];
     return orders.length === 0 ? 0 : Math.max(...orders) + 1;
+  }
+
+  /**
+   * Auto label for a new feature: <type display name> + zero-padded sequence.
+   * Sequence counts existing features of the same type on this floor and
+   * skips taken labels (e.g. after deletions): 灭火器001, 灭火器002, …
+   */
+  function nextAutoLabel(type: string): string {
+    const display = t(`featureTypes.${type}`, { defaultValue: type });
+    const taken = new Set(
+      (floor?.features ?? [])
+        .filter((f) => f.type === type)
+        .map((f) => f.label ?? ""),
+    );
+    let n = (floor?.features ?? []).filter((f) => f.type === type).length + 1;
+    for (;; n++) {
+      const label = `${display}${String(n).padStart(3, "0")}`;
+      if (!taken.has(label)) return label;
+      if (n > 9999) return label;
+    }
   }
 
   function applyLocalGeometry(featureId: string, geometry: FeatureGeometry) {

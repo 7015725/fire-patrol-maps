@@ -31,6 +31,7 @@
   "featureTypes": {
     "fire_extinguisher": "灭火器",
     "fire_hydrant": "消火栓",
+    "extinguisher_hydrant_combo": "灭火器 + 消火栓",
     "exit": "安全出口",
     "assembly_point": "紧急集合点（Code Red）",
     "safe_haven": "避险集合点（Code White）",
@@ -134,6 +135,7 @@
     "circle": "圆形"
   },
   "inspectionMode": "月检模式",
+  "startInspection": "开始月检",
   "inspectionModeOn": "月检中",
   "inspectionProgress": "本月已检 {{inspected}} / {{total}}",
   "inspectionHistory": "巡检记录",

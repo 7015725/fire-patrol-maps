@@ -41,6 +41,7 @@ export type CampusesResponse = {
 export const FEATURE_TYPES = [
   "fire_extinguisher",
   "fire_hydrant",
+  "extinguisher_hydrant_combo",
   "exit",
   "assembly_point",
   "safe_haven",

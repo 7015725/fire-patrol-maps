@@ -39,7 +39,7 @@ describe("feature type catalog", () => {
         "freight_elevator",
       ])
     );
-    expect(FEATURE_TYPES).toHaveLength(32);
+    expect(FEATURE_TYPES).toHaveLength(33);
     // No duplicates
     expect(new Set(FEATURE_TYPES).size).toBe(FEATURE_TYPES.length);
   });

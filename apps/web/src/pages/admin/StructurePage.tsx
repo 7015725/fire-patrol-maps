@@ -217,7 +217,13 @@ export function StructurePage() {
           </span>
         </span>
         <div className="row">
-          <Link to={`/admin/floors/${floor.id}`} className="btn btn-primary btn-sm">
+          <Link
+            to={`/admin/floors/${floor.id}?inspect=1`}
+            className="btn btn-primary btn-sm"
+          >
+            {t("startInspection")}
+          </Link>
+          <Link to={`/admin/floors/${floor.id}`} className="btn btn-sm">
             {t("editMap")}
           </Link>
           <button

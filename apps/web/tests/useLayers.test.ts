@@ -7,6 +7,7 @@ import type { LayerPreset } from "../src/types";
 const FEATURE_TYPES = [
   "fire_extinguisher",
   "fire_hydrant",
+  "extinguisher_hydrant_combo",
   "exit",
   "assembly_point",
   "safe_haven",

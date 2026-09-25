@@ -6,6 +6,7 @@ export const FEATURE_TYPES = [
   // Life safety & emergency response
   "fire_extinguisher",
   "fire_hydrant",
+  "extinguisher_hydrant_combo",
   "exit",
   "assembly_point",
   "safe_haven",
@@ -89,6 +90,7 @@ export const PRESET_SEEDS: {
     featureTypes: [
       "fire_extinguisher",
       "fire_hydrant",
+      "extinguisher_hydrant_combo",
       "exit",
       "fire_alarm_pull",
       "electrical_fire_controller",

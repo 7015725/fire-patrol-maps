@@ -7,6 +7,7 @@ export const FEATURE_TYPE_COLORS: Record<string, string> = {
   safe_haven: "#2563eb",
   fire_extinguisher: "#dc2626",
   fire_hydrant: "#991b1b",
+  extinguisher_hydrant_combo: "#7f1d1d",
   fire_alarm_pull: "#b91c1c",
   electrical_fire_controller: "#f59e0b",
   gas_suppression_controller: "#7e22ce",
