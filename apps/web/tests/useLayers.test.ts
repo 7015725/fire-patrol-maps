@@ -43,12 +43,16 @@ const presets: LayerPreset[] = [
   {
     id: "1",
     slug: "all",
+    nameZh: null,
+    nameEn: null,
     featureTypes: [...FEATURE_TYPES],
     sortOrder: 0,
   },
   {
     id: "2",
     slug: "evacuation",
+    nameZh: null,
+    nameEn: null,
     featureTypes: [
       "exit",
       "assembly_point",
@@ -62,6 +66,8 @@ const presets: LayerPreset[] = [
   {
     id: "3",
     slug: "fire_response",
+    nameZh: null,
+    nameEn: null,
     featureTypes: [
       "fire_extinguisher",
       "fire_hydrant",

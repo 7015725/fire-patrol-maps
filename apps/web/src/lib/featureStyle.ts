@@ -1,3 +1,5 @@
+import type { LayerPreset } from "../types";
+
 /** Stable colors for feature types (public map + legend). */
 export const FEATURE_TYPE_COLORS: Record<string, string> = {
   exit: "#16a34a",
@@ -36,4 +38,22 @@ export const FEATURE_TYPE_COLORS: Record<string, string> = {
 
 export function colorForType(type: string): string {
   return FEATURE_TYPE_COLORS[type] ?? "#64748b";
+}
+
+/**
+ * Display name for a layer preset.
+ * Admin custom names (nameZh / nameEn) win; otherwise fall back to the
+ * i18n presets.<slug> catalog; custom slugs without a name show the slug.
+ */
+export function presetDisplayName(
+  preset: LayerPreset,
+  lang: string,
+  t: (key: string, opts?: { defaultValue?: string }) => string,
+): string {
+  const custom = lang.startsWith("zh") ? preset.nameZh : preset.nameEn;
+  if (custom && custom.trim().length > 0) return custom;
+  // Cross-language fallback: a name in either language beats the slug.
+  const other = lang.startsWith("zh") ? preset.nameEn : preset.nameZh;
+  if (other && other.trim().length > 0) return other;
+  return t(`presets.${preset.slug}`, { defaultValue: preset.slug });
 }

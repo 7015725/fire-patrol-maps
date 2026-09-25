@@ -129,6 +129,10 @@ export const adminUsers = sqliteTable("admin_users", {
 export const layerPresets = sqliteTable("layer_presets", {
   id: idColumn(),
   slug: text("slug").notNull().unique(),
+  /** Admin custom display name (Chinese). Null = fall back to i18n presets.<slug>. */
+  nameZh: text("name_zh"),
+  /** Admin custom display name (English). Null = fall back to i18n presets.<slug>. */
+  nameEn: text("name_en"),
   /** Stored as JSON array of feature type strings. */
   featureTypes: text("feature_types", { mode: "json" }).$type<string[]>().notNull(),
   sortOrder: integer("sort_order").notNull().default(0),

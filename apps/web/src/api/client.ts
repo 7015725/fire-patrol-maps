@@ -362,13 +362,30 @@ export const api = {
 
   // --- Admin presets ---
 
+  createPreset(input: {
+    nameZh: string;
+    nameEn?: string;
+    featureTypes: string[];
+  }): Promise<LayerPreset> {
+    return requestJson<LayerPreset>("/api/admin/presets", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
   updatePreset(
     id: string,
-    input: { featureTypes: string[] },
+    input: { featureTypes?: string[]; nameZh?: string | null; nameEn?: string | null },
   ): Promise<LayerPreset> {
     return requestJson<LayerPreset>(`/api/admin/presets/${encodeURIComponent(id)}`, {
       method: "PATCH",
       body: JSON.stringify(input),
+    });
+  },
+
+  deletePreset(id: string): Promise<{ ok: true }> {
+    return requestJson<{ ok: true }>(`/api/admin/presets/${encodeURIComponent(id)}`, {
+      method: "DELETE",
     });
   },
 };

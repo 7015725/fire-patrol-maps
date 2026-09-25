@@ -11,6 +11,8 @@ export function presetsRoutes(getDb: () => Db) {
       .select({
         id: layerPresets.id,
         slug: layerPresets.slug,
+        nameZh: layerPresets.nameZh,
+        nameEn: layerPresets.nameEn,
         featureTypes: layerPresets.featureTypes,
         sortOrder: layerPresets.sortOrder,
       })

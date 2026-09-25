@@ -588,6 +588,12 @@ h2 {
 }
 
 /* 图层面板里的预设按钮 */
+.preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .preset-chip {
   display: inline-flex;
   align-items: center;

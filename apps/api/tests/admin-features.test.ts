@@ -269,19 +269,120 @@ describe("admin features, users, and presets", () => {
       },
       body: JSON.stringify({ featureTypes: nextTypes }),
     });
+    // Scheme A: system preset lists are version-managed, not admin-editable.
+    expect(res.status).toBe(403);
+  });
+
+  it("renames a system preset without touching its list", async () => {
+    const res = await app.request(`/api/admin/presets/${evacuationPresetId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookie,
+      },
+      body: JSON.stringify({ nameZh: "疏散改名", nameEn: "Evac Renamed" }),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({
       id: evacuationPresetId,
       slug: "evacuation",
-      featureTypes: nextTypes,
+      nameZh: "疏散改名",
+      nameEn: "Evac Renamed",
     });
 
     const publicRes = await app.request("/api/presets");
     expect(publicRes.status).toBe(200);
     const publicBody = await publicRes.json();
     const evac = publicBody.presets.find((p: { id: string }) => p.id === evacuationPresetId);
-    expect(evac.featureTypes).toEqual(nextTypes);
+    expect(evac.nameZh).toBe("疏散改名");
+    expect(evac.featureTypes).toEqual(originalEvacuationTypes);
+
+    // Restore names for other tests / seed state.
+    await db
+      .update(layerPresets)
+      .set({ nameZh: null, nameEn: null })
+      .where(eq(layerPresets.id, evacuationPresetId));
+  });
+
+  it("creates, edits, and deletes a custom preset", async () => {
+    const create = await app.request("/api/admin/presets", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookie,
+      },
+      body: JSON.stringify({
+        nameZh: "测试预设",
+        nameEn: "Test Preset",
+        featureTypes: ["exit", "first_aid"],
+      }),
+    });
+    expect(create.status).toBe(201);
+    const created = await create.json();
+    expect(created.slug.startsWith("custom-")).toBe(true);
+    expect(created).toMatchObject({
+      nameZh: "测试预设",
+      nameEn: "Test Preset",
+      featureTypes: ["exit", "first_aid"],
+    });
+
+    const patch = await app.request(`/api/admin/presets/${created.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookie,
+      },
+      body: JSON.stringify({
+        nameZh: "测试预设改",
+        featureTypes: ["exit"],
+      }),
+    });
+    expect(patch.status).toBe(200);
+    expect(await patch.json()).toMatchObject({
+      nameZh: "测试预设改",
+      featureTypes: ["exit"],
+    });
+
+    const del = await app.request(`/api/admin/presets/${created.id}`, {
+      method: "DELETE",
+      headers: { Cookie: cookie },
+    });
+    expect(del.status).toBe(200);
+  });
+
+  it("locks system presets and all against delete/rename-abuse", async () => {
+    const [all] = await db
+      .select()
+      .from(layerPresets)
+      .where(eq(layerPresets.slug, "all"))
+      .limit(1);
+    expect(all).toBeTruthy();
+
+    const delAll = await app.request(`/api/admin/presets/${all!.id}`, {
+      method: "DELETE",
+      headers: { Cookie: cookie },
+    });
+    expect(delAll.status).toBe(403);
+
+    const patchAll = await app.request(`/api/admin/presets/${all!.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookie,
+      },
+      body: JSON.stringify({ nameZh: "全部改" }),
+    });
+    expect(patchAll.status).toBe(403);
+
+    const delSystem = await app.request(
+      `/api/admin/presets/${evacuationPresetId}`,
+      {
+        method: "DELETE",
+        headers: { Cookie: cookie },
+      },
+    );
+    expect(delSystem.status).toBe(403);
   });
 
   it("supports feature patch/delete and user create", async () => {

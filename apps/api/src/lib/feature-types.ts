@@ -43,6 +43,28 @@ export const FEATURE_TYPES = [
 
 export type FeatureType = (typeof FEATURE_TYPES)[number];
 
+/**
+ * System preset slugs shipped with the app. `all` is special: locked,
+ * always present, default-selected on the public map. The rest may be
+ * renamed in admin (display name only — slugs are frozen internal keys).
+ */
+export const SYSTEM_PRESET_SLUGS = [
+  "all",
+  "evacuation",
+  "fire_response",
+  "medical",
+  "spill_chemical",
+  "utilities",
+  "hazards",
+  "rooms",
+] as const;
+
+export type SystemPresetSlug = (typeof SYSTEM_PRESET_SLUGS)[number];
+
+export function isSystemPresetSlug(slug: string): slug is SystemPresetSlug {
+  return (SYSTEM_PRESET_SLUGS as readonly string[]).includes(slug);
+}
+
 export const PRESET_SEEDS: {
   slug: string;
   sortOrder: number;

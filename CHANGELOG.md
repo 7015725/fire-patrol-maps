@@ -12,6 +12,15 @@ Container images: `ghcr.io/ajthom90/facility-maps:<version>` (see README).
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-09-25
+
+### Added
+- 预设自定义（方案 A）：后台可新建自定义预设（中文名必填、英文名可选、设施名单自选），可改名、可删除；系统预设可改名（`all` 锁定），设施名单由版本管理。自定义名为空时回退语言包。
+- 公开/管理预设接口返回 `nameZh` / `nameEn`；前台图层筛选显示自定义名，预设按钮自动换行。
+
+### Fixed
+- 启动迁移补齐旧 `__drizzle_migrations` 空时间戳，避免已部署数据库重复执行 0000 初始化而启动失败。
+
 ## [0.8.1] — 2026-09-25
 
 ### Fixed

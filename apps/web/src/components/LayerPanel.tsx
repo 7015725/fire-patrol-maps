@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { LayerPreset } from "../types";
 import { FEATURE_TYPES } from "../types";
-import { colorForType } from "../lib/featureStyle";
+import { colorForType, presetDisplayName } from "../lib/featureStyle";
 
 export type LayerPanelProps = {
   presets: LayerPreset[];
@@ -24,12 +24,12 @@ export function LayerPanel({
   allTypes = FEATURE_TYPES,
   featureSelected = false,
 }: LayerPanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const body = (
     <>
-      <div className="row" style={{ marginBottom: "0.75rem" }}>
+      <div className="preset-chips" style={{ marginBottom: "0.75rem" }}>
         {presets.map((preset) => {
           const active = activePresetSlug === preset.slug;
           return (
@@ -40,7 +40,7 @@ export function LayerPanel({
               aria-pressed={active}
               className={active ? "preset-chip active" : "preset-chip"}
             >
-              {t(`presets.${preset.slug}`, { defaultValue: preset.slug })}
+              {presetDisplayName(preset, i18n.language, t)}
             </button>
           );
         })}

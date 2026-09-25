@@ -49,6 +49,8 @@ export function ensureSchemaCompat(sqlite: SqliteDatabase): void {
   // Photo/video attachments on map features (post-0.3 deploy upgrade).
   ensureFeatureMediaTable(sqlite);
   ensureFeatureSortOrder(sqlite);
+  // Admin custom preset display names (post-0.9 deploy upgrade).
+  ensurePresetNameColumns(sqlite);
 
   if (!tableExists(sqlite, "floors")) {
     return;
@@ -137,6 +139,20 @@ function ensureFeatureSortOrder(sqlite: SqliteDatabase): void {
   sqlite.exec(
     `ALTER TABLE features ADD COLUMN sort_order integer NOT NULL DEFAULT 0`,
   );
+}
+
+/**
+ * Add name_zh / name_en to layer_presets on DBs created before 0.9.
+ * Nullable columns — existing rows read as null and fall back to i18n.
+ */
+function ensurePresetNameColumns(sqlite: SqliteDatabase): void {
+  if (!tableExists(sqlite, "layer_presets")) return;
+  if (!hasColumn(sqlite, "layer_presets", "name_zh")) {
+    sqlite.exec(`ALTER TABLE layer_presets ADD COLUMN name_zh text`);
+  }
+  if (!hasColumn(sqlite, "layer_presets", "name_en")) {
+    sqlite.exec(`ALTER TABLE layer_presets ADD COLUMN name_en text`);
+  }
 }
 
 function ensureFeatureMediaTable(sqlite: SqliteDatabase): void {

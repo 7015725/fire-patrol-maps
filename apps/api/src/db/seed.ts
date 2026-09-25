@@ -14,14 +14,14 @@ function resolveFeatureTypes(
 /**
  * Seeds / refreshes system layer presets from PRESET_SEEDS.
  *
- * - Inserts any missing preset slug.
+ * Scheme A (admin-customizable names):
+ * - Inserts any missing preset slug (names start NULL = i18n fallback).
  * - Updates featureTypes + sortOrder for every known system slug so catalog
  *   expansions (new AWAIR types / presets) apply when seed is re-run.
- * - Does not delete admin-only custom presets with other slugs.
- *
- * Note: re-running seed overwrites the feature-type lists on system presets
- * (all, evacuation, fire_response, …). Re-apply local preset customizations
- * after upgrade if you changed them in admin.
+ * - NEVER touches nameZh / nameEn: display names are admin-owned via
+ *   PATCH /api/admin/presets/:id once set. Re-running seed keeps them.
+ * - Does not delete admin-only custom presets with other slugs, and never
+ *   modifies them.
  *
  * Campuses, buildings, and floors are created by admins — not preloaded.
  */

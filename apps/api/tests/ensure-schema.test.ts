@@ -251,4 +251,73 @@ describe("ensureSchemaCompat", () => {
     expect(row).toEqual({ feature_id: "feat1", mime_type: "image/png" });
     sqlite.close();
   });
+
+  it("adds preset name columns on a pre-0.9 layer_presets table", () => {
+    const dbPath = tempSqlite("no-preset-names");
+    const sqlite = new Database(dbPath);
+    sqlite.pragma("foreign_keys = ON");
+    sqlite.exec(`
+      CREATE TABLE campuses (
+        id text PRIMARY KEY NOT NULL,
+        name text NOT NULL,
+        slug text NOT NULL,
+        sort_order integer DEFAULT 0 NOT NULL,
+        hierarchy_mode text DEFAULT 'full' NOT NULL
+      );
+      CREATE TABLE layer_presets (
+        id text PRIMARY KEY NOT NULL,
+        slug text NOT NULL,
+        feature_types text NOT NULL,
+        sort_order integer DEFAULT 0 NOT NULL
+      );
+      CREATE TABLE floors (
+        id text PRIMARY KEY NOT NULL,
+        campus_id text NOT NULL,
+        building_id text,
+        name text NOT NULL,
+        slug text NOT NULL,
+        level integer DEFAULT 0 NOT NULL,
+        sort_order integer DEFAULT 0 NOT NULL
+      );
+      CREATE TABLE features (
+        id text PRIMARY KEY NOT NULL,
+        floor_id text NOT NULL,
+        type text NOT NULL,
+        geometry text NOT NULL,
+        label text,
+        notes text,
+        created_at integer NOT NULL,
+        updated_at integer NOT NULL,
+        sort_order integer DEFAULT 0 NOT NULL
+      );
+      CREATE TABLE feature_media (
+        id text PRIMARY KEY NOT NULL,
+        feature_id text NOT NULL,
+        file_path text NOT NULL,
+        mime_type text NOT NULL,
+        size_bytes integer NOT NULL,
+        created_at integer NOT NULL
+      );
+      INSERT INTO layer_presets (id, slug, feature_types, sort_order)
+        VALUES ('p1', 'evacuation', '["exit"]', 1);
+    `);
+
+    const before = sqlite.pragma("table_info(layer_presets)") as { name: string }[];
+    expect(before.some((c) => c.name === "name_zh")).toBe(false);
+
+    ensureSchemaCompat(sqlite);
+
+    const after = sqlite.pragma("table_info(layer_presets)") as { name: string }[];
+    expect(after.some((c) => c.name === "name_zh")).toBe(true);
+    expect(after.some((c) => c.name === "name_en")).toBe(true);
+
+    const row = sqlite
+      .prepare(`SELECT slug, name_zh, name_en FROM layer_presets WHERE id = ?`)
+      .get("p1") as { slug: string; name_zh: string | null; name_en: string | null };
+    expect(row).toEqual({ slug: "evacuation", name_zh: null, name_en: null });
+
+    // Idempotent: second pass is a no-op.
+    ensureSchemaCompat(sqlite);
+    sqlite.close();
+  });
 });

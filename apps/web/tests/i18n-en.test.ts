@@ -83,4 +83,22 @@ describe("en.json i18n catalog", () => {
     }
     expect(Object.keys(en.presets).sort()).toEqual([...PRESET_SLUGS].sort());
   });
+
+  it("contains admin preset-management keys", () => {
+    for (const key of [
+      "presetNameZh",
+      "presetNameEn",
+      "newPreset",
+      "presetLocked",
+      "presetLockedAll",
+      "presetSystemListLocked",
+      "deletePresetConfirm",
+      "presetNameRequired",
+      "presetCreateFailed",
+    ] as const) {
+      expect(en, `missing ${key}`).toHaveProperty(key);
+      expect(typeof en[key as keyof typeof en]).toBe("string");
+      expect((en[key as keyof typeof en] as string).length).toBeGreaterThan(0);
+    }
+  });
 });

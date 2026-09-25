@@ -222,6 +222,8 @@ describe("public APIs", () => {
     expect(evac).toMatchObject({
       id: expect.any(String),
       slug: "evacuation",
+      nameZh: null,
+      nameEn: null,
       sortOrder: expect.any(Number),
     });
 

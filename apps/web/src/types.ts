@@ -134,6 +134,10 @@ export type FloorDetail = FloorSummary & {
 export type LayerPreset = {
   id: string;
   slug: string;
+  /** Admin custom display name (Chinese). Null = fall back to i18n presets.<slug>. */
+  nameZh: string | null;
+  /** Admin custom display name (English). Null = fall back to i18n presets.<slug>. */
+  nameEn: string | null;
   featureTypes: string[];
   sortOrder: number;
 };
