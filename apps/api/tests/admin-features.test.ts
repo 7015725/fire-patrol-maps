@@ -148,6 +148,22 @@ describe("admin features, users, and presets", () => {
     }
   });
 
+  it("rejects administrator passwords shorter than 12 characters", async () => {
+    const create = await app.request("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({ username: "weak-password-admin", password: "short" }),
+    });
+    expect(create.status).toBe(400);
+
+    const update = await app.request(`/api/admin/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({ password: "short" }),
+    });
+    expect(update.status).toBe(400);
+  });
+
   it("creates a point feature → 201", async () => {
     const res = await app.request("/api/admin/features", {
       method: "POST",

@@ -6,7 +6,7 @@ export function SettingsPage() {
   const [prefs, update] = useUiPrefs();
 
   return (
-    <section>
+    <section className="admin-page settings-page">
       <div className="page-header">
         <h1>{t("settings")}</h1>
         <p className="hint">{t("settingsHint")}</p>

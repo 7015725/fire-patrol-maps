@@ -70,13 +70,35 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="shell">
-      <header className={`topbar${burger.open ? " nav-open" : ""}`}>
+    <div className={`shell admin-shell${burger.open ? " nav-open" : ""}`}>
+      <header className="topbar admin-topbar">
         <div className="topbar-left">
           <Link to="/admin" className="brand">
             {t("admin")}
           </Link>
-          <nav className="nav" onClick={burger.close}>
+        </div>
+        <div className="topbar-right">
+          <span className="admin-user">{user.username}</span>
+          <LanguageSwitcher />
+          <button type="button" onClick={onLogout} className="btn btn-ghost btn-sm">
+            {t("logout")}
+          </button>
+          {burger.enabled && (
+            <button
+              type="button"
+              className="hamburger-btn"
+              aria-label={t("menu")}
+              aria-expanded={burger.open}
+              onClick={burger.toggle}
+            >
+              ☰
+            </button>
+          )}
+        </div>
+      </header>
+      <main className="main main-admin" onClick={burger.close}>
+        <div className="admin-workspace">
+          <nav className="nav admin-sidebar" onClick={burger.close}>
             <NavLink
               to="/admin"
               end
@@ -106,28 +128,10 @@ export function AdminLayout() {
               {t("publicView")}
             </Link>
           </nav>
+          <div className="admin-content">
+            <Outlet />
+          </div>
         </div>
-        <div className="topbar-right">
-          <span style={{ fontSize: "0.85rem", color: "#555" }}>{user.username}</span>
-          <LanguageSwitcher />
-          <button type="button" onClick={onLogout} className="btn btn-ghost btn-sm">
-            {t("logout")}
-          </button>
-          {burger.enabled && (
-            <button
-              type="button"
-              className="hamburger-btn"
-              aria-label={t("menu")}
-              aria-expanded={burger.open}
-              onClick={burger.toggle}
-            >
-              ☰
-            </button>
-          )}
-        </div>
-      </header>
-      <main className="main main-admin" onClick={burger.close}>
-        <Outlet />
       </main>
     </div>
   );

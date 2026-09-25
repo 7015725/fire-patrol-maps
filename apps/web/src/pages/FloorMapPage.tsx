@@ -47,41 +47,47 @@ export function FloorMapView({ floor, crumbs, presets }: FloorMapViewProps) {
   const noFeatures = floor.features.length === 0;
 
   return (
-    <section className="stack">
+    <section className="stack map-page">
       <Breadcrumb items={crumbs} />
-      <h1>{floor.name}</h1>
+      <div className="page-heading map-heading">
+        <span className="eyebrow">{t("floors")}</span>
+        <h1>{floor.name}</h1>
+      </div>
 
       {!hasPlan ? (
         <p className="empty">{t("emptyPlan")}</p>
       ) : (
-        <div
-          className="map-stage"
-          style={{ height: "min(70vh, 640px)", minHeight: 280 }}
-        >
-          <MapCanvas
-            planUrl={floor.plan!.url}
-            mimeType={floor.plan!.mimeType}
-            planWidth={floor.plan!.width}
-            planHeight={floor.plan!.height}
-            features={floor.features}
-            visibleTypes={activeTypes}
-            onSelectFeature={setSelected}
-            selectedFeatureId={selected?.id ?? null}
-          />
-          <FeaturePopup feature={selected} onClose={() => setSelected(null)} />
-          <LayerPanel
-            presets={presets}
-            activeTypes={activeTypes}
-            activePresetSlug={activePresetSlug}
-            onApplyPreset={applyPreset}
-            onToggleType={toggleType}
-            allTypes={FEATURE_TYPES}
-            featureSelected={selected != null}
-          />
+        <div className="map-layout">
+          <div
+            className="map-stage"
+            style={{ height: "min(70vh, 640px)", minHeight: 280 }}
+          >
+            <MapCanvas
+              planUrl={floor.plan!.url}
+              mimeType={floor.plan!.mimeType}
+              planWidth={floor.plan!.width}
+              planHeight={floor.plan!.height}
+              features={floor.features}
+              visibleTypes={activeTypes}
+              onSelectFeature={setSelected}
+              selectedFeatureId={selected?.id ?? null}
+            />
+            <FeaturePopup feature={selected} onClose={() => setSelected(null)} />
+          </div>
+          <div className="map-sidebar">
+            <LayerPanel
+              presets={presets}
+              activeTypes={activeTypes}
+              activePresetSlug={activePresetSlug}
+              onApplyPreset={applyPreset}
+              onToggleType={toggleType}
+              allTypes={FEATURE_TYPES}
+              featureSelected={selected != null}
+            />
+            <Legend visibleTypes={visibleTypeList} emptyFeatures={hasPlan && noFeatures} />
+          </div>
         </div>
       )}
-
-      <Legend visibleTypes={visibleTypeList} emptyFeatures={hasPlan && noFeatures} />
     </section>
   );
 }

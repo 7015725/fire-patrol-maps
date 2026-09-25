@@ -50,28 +50,29 @@ export function BuildingPage() {
   }
 
   return (
-    <section>
+    <section className="page-stack">
       <Breadcrumb
         items={[
           { label: campusName, to: `/${campusSlug}` },
           { label: building.name },
         ]}
       />
-      <div className="page-header">
+      <div className="page-heading">
+        <span className="eyebrow">{t("buildings")}</span>
         <h1>{building.name}</h1>
       </div>
-      <h2>{t("floors")}</h2>
+      <h2 className="section-title">{t("floors")}</h2>
       {building.floors.length === 0 ? (
         <p className="empty">{t("emptyFloors")}</p>
       ) : (
-        <ul className="list">
+        <ul className="list navigation-grid">
           {building.floors.map((floor) => (
-            <li key={floor.id} className="list-item">
+            <li key={floor.id} className="list-item navigation-card">
               <Link
                 to={`/${campusSlug}/${building.slug}/${floor.slug}`}
-                style={{ color: "inherit", textDecoration: "none", fontWeight: 600 }}
+                className="navigation-link"
               >
-                {floor.name}
+                <span>{floor.name}</span><span aria-hidden="true" className="navigation-arrow">→</span>
               </Link>
             </li>
           ))}

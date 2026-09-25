@@ -45,24 +45,12 @@ export function LayerPanel({
           );
         })}
       </div>
-      <ul
-        style={{
-          listStyle: "none",
-          margin: 0,
-          padding: 0,
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(10rem, 1fr))",
-          gap: "0.35rem",
-        }}
-      >
+      <ul className="layer-list">
         {allTypes.map((type) => {
           const checked = activeTypes.has(type);
           return (
             <li key={type}>
-              <label
-                className="row"
-                style={{ cursor: "pointer", padding: "0.25rem 0" }}
-              >
+              <label className="row layer-option">
                 <input
                   type="checkbox"
                   checked={checked}
@@ -88,9 +76,8 @@ export function LayerPanel({
       <aside
         aria-label={t("layers")}
         className="layer-panel-desktop popover layer-panel"
-        style={{ padding: "0.85rem 1rem" }}
       >
-        <h2 style={{ marginBottom: "0.65rem" }}>{t("layers")}</h2>
+        <h2 className="layer-title">{t("layers")}</h2>
         {body}
       </aside>
 
@@ -99,22 +86,7 @@ export function LayerPanel({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          style={{
-            position: "fixed",
-            /* When a feature popup is open, raise FAB above popup area */
-            bottom: featureSelected ? "7.5rem" : "1rem",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 40,
-            padding: "0.75rem 1.5rem",
-            borderRadius: 999,
-            border: "none",
-            background: "#1e293b",
-            color: "#fff",
-            fontWeight: 600,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
-            cursor: "pointer",
-          }}
+          className={`layer-fab${featureSelected ? " is-raised" : ""}`}
         >
           {t("layers")}
         </button>
@@ -123,36 +95,14 @@ export function LayerPanel({
             role="dialog"
             aria-modal="true"
             aria-label={t("layers")}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 50,
-              background: "rgba(0,0,0,0.4)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-            }}
+            className="layer-mobile-backdrop"
             onClick={() => setOpen(false)}
           >
             <div
-              style={{
-                background: "#fff",
-                borderTopLeftRadius: 16,
-                borderTopRightRadius: 16,
-                padding: "1rem 1.25rem 1.5rem",
-                maxHeight: "70vh",
-                overflow: "auto",
-              }}
+              className="layer-sheet"
               onClick={(e) => e.stopPropagation()}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "0.75rem",
-                }}
-              >
+              <div className="layer-sheet-header">
                 <h2>{t("layers")}</h2>
                 <button
                   type="button"
@@ -168,15 +118,6 @@ export function LayerPanel({
           </div>
         ) : null}
       </div>
-
-      <style>{`
-        .layer-panel-mobile { display: none; }
-        .layer-panel-desktop { display: block; }
-        @media (max-width: 640px) {
-          .layer-panel-mobile { display: block; }
-          .layer-panel-desktop { display: none; }
-        }
-      `}</style>
     </>
   );
 }

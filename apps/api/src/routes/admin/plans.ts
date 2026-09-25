@@ -8,6 +8,7 @@ import { floorPlans, floors } from "../../db/schema.js";
 import { env } from "../../lib/env.js";
 import { planFileUrl } from "../../lib/floor-payload.js";
 import { readPlanDimensions } from "../../lib/plan-dimensions.js";
+import { limitUploadBody } from "../../lib/upload-limits.js";
 import {
   requireAdmin,
   type AdminVariables,
@@ -31,6 +32,7 @@ const MIME_BY_EXT: Record<string, string> = {
 export function adminPlansRoutes(getDb: () => Db, uploadDir: string) {
   const app = new Hono<{ Variables: AdminVariables }>();
   app.use("*", requireAdmin(getDb));
+  app.use("*", limitUploadBody());
 
   app.post("/:id/plan", async (c) => {
     const floorId = c.req.param("id");

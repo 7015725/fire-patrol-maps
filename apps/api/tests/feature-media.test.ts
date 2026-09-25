@@ -222,6 +222,27 @@ describe("feature media upload and floor payload", () => {
     uploadedMediaIds.push(body.id);
   });
 
+  it("rejects an oversized chunked upload before multipart parsing", async () => {
+    const chunk = new Uint8Array(1024 * 1024);
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (let i = 0; i < 22; i++) controller.enqueue(chunk);
+        controller.close();
+      },
+    });
+    const request = new Request(`http://localhost/api/admin/features/${featureId}/media`, {
+      method: "POST",
+      headers: { Cookie: cookie, "Content-Type": "multipart/form-data; boundary=test" },
+      body,
+      // Node requires this when a Request is constructed from a stream.
+      duplex: "half",
+    } as RequestInit);
+
+    const res = await app.fetch(request);
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ error: "文件过大" });
+  });
+
   it("unauthenticated POST → 401", async () => {
     const form = new FormData();
     form.append("file", new File([TINY_PNG], "photo.png", { type: "image/png" }));

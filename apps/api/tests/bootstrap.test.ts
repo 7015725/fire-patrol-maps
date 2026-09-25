@@ -70,14 +70,22 @@ describe("bootstrapAdmin", () => {
     expect(second[0].id).toBe(first[0].id);
   });
 
-  it("does nothing when env vars are empty", async () => {
+  it("rejects an empty bootstrap configuration when no admin exists", async () => {
     await db.delete(adminUsers);
     env.ADMIN_BOOTSTRAP_USERNAME = "";
     env.ADMIN_BOOTSTRAP_PASSWORD = "";
 
-    await bootstrapAdmin(db);
+    await expect(bootstrapAdmin(db)).rejects.toThrow("No administrator exists");
     const users = await db.select().from(adminUsers);
     expect(users).toHaveLength(0);
+  });
+
+  it("rejects a known bootstrap password when no admin exists", async () => {
+    await db.delete(adminUsers);
+    env.ADMIN_BOOTSTRAP_USERNAME = "admin";
+    env.ADMIN_BOOTSTRAP_PASSWORD = "changeme";
+
+    await expect(bootstrapAdmin(db)).rejects.toThrow("at least 12 characters");
   });
 
   it("does nothing when users already exist even with env set", async () => {

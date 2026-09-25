@@ -35,15 +35,25 @@ export function HomePage() {
   }
 
   return (
-    <section>
-      <h1>{t("campuses")}</h1>
+    <section className="page-stack landing-page">
+      <div className="page-heading page-heading-hero">
+        <span className="eyebrow">{t("appTitle")}</span>
+        <h1>{t("campuses")}</h1>
+        <p className="hero-summary">{t("campusCount", { count: campuses.length })}</p>
+      </div>
       {campuses.length === 0 ? (
         <p className="empty">{t("emptyCampuses")}</p>
       ) : (
-        <ul className="list">
+        <ul className="list navigation-grid">
           {campuses.map((campus) => (
-            <li key={campus.id} className="list-item">
-              <Link to={`/${campus.slug}`}>{campus.name}</Link>
+            <li key={campus.id} className="list-item navigation-card">
+              <Link to={`/${campus.slug}`} className="navigation-link">
+                <span className="navigation-link-title">
+                  <span className="navigation-link-kicker">{t("campuses")}</span>
+                  <span>{campus.name}</span>
+                </span>
+                <span aria-hidden="true" className="navigation-arrow">→</span>
+              </Link>
             </li>
           ))}
         </ul>

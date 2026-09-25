@@ -21,7 +21,7 @@ function publicUser(user: { id: string; username: string }) {
 export function authRoutes(getDb: () => Db) {
   const app = new Hono();
 
-  app.post("/login", rateLimitLogin(), async (c) => {
+  app.post("/login", async (c) => {
     let body: unknown;
     try {
       body = await c.req.json();
@@ -35,6 +35,9 @@ export function authRoutes(getDb: () => Db) {
     }
 
     const { username, password } = parsed.data;
+    const limiter = rateLimitLogin(username);
+    const limited = await limiter(c, async () => undefined);
+    if (limited) return limited;
     const [user] = await getDb()
       .select()
       .from(adminUsers)

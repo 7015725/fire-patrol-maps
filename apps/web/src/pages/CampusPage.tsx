@@ -61,17 +61,22 @@ export function CampusPage() {
 
   if (campus.hierarchyMode === "no_buildings") {
     return (
-      <section>
+      <section className="page-stack">
         <Breadcrumb items={[{ label: campus.name }]} />
-        <h1>{campus.name}</h1>
-        <h2>{t("floors")}</h2>
+        <div className="page-heading">
+          <span className="eyebrow">{t("campuses")}</span>
+          <h1>{campus.name}</h1>
+        </div>
+        <h2 className="section-title">{t("floors")}</h2>
         {campus.floors.length === 0 ? (
           <p className="empty">{t("emptyFloors")}</p>
         ) : (
-          <ul className="list">
+          <ul className="list navigation-grid">
             {campus.floors.map((floor) => (
-              <li key={floor.id} className="list-item">
-                <Link to={`/${campus.slug}/${floor.slug}`}>{floor.name}</Link>
+              <li key={floor.id} className="list-item navigation-card">
+                <Link to={`/${campus.slug}/${floor.slug}`} className="navigation-link">
+                  <span>{floor.name}</span><span aria-hidden="true" className="navigation-arrow">→</span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -82,18 +87,21 @@ export function CampusPage() {
 
   // full
   return (
-    <section>
+    <section className="page-stack">
       <Breadcrumb items={[{ label: campus.name }]} />
-      <h1>{campus.name}</h1>
-      <h2>{t("buildings")}</h2>
+      <div className="page-heading">
+        <span className="eyebrow">{t("campuses")}</span>
+        <h1>{campus.name}</h1>
+      </div>
+      <h2 className="section-title">{t("buildings")}</h2>
       {campus.buildings.length === 0 ? (
         <p className="empty">{t("emptyBuildings")}</p>
       ) : (
-        <ul className="list">
+        <ul className="list navigation-grid">
           {campus.buildings.map((building) => (
-            <li key={building.id} className="list-item">
-              <Link to={`/${campus.slug}/${building.slug}`}>
-                {building.name}
+            <li key={building.id} className="list-item navigation-card">
+              <Link to={`/${campus.slug}/${building.slug}`} className="navigation-link">
+                <span>{building.name}</span><span aria-hidden="true" className="navigation-arrow">→</span>
               </Link>
             </li>
           ))}

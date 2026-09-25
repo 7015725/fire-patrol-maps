@@ -34,8 +34,10 @@ services:
       # so you can migrate hosts with only the data+config volumes.
       SESSION_SECRET: ${SESSION_SECRET:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
-      ADMIN_BOOTSTRAP_USERNAME: ${ADMIN_BOOTSTRAP_USERNAME:-admin}
-      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-changeme}
+      # Required only while the database has no administrator. They are never
+      # persisted into /config/app.env.
+      ADMIN_BOOTSTRAP_USERNAME: ${ADMIN_BOOTSTRAP_USERNAME:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
     volumes:
       # All mutable application data (DB + plans) — back this up
       - data:/data

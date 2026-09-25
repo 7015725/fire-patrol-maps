@@ -51,9 +51,11 @@ export function LoginPage() {
   }
 
   return (
-    <section className="card" style={{ maxWidth: 360, margin: "2rem auto" }}>
-      <h1>{t("login")}</h1>
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: "0.75rem" }}>
+    <main className="auth-shell">
+      <section className="card auth-card">
+        <span className="eyebrow">{t("appTitle")}</span>
+        <h1>{t("login")}</h1>
+        <form onSubmit={onSubmit} className="auth-form">
         <label className="label">
           <span>{t("username")}</span>
           <input
@@ -85,7 +87,8 @@ export function LoginPage() {
         <button type="submit" disabled={submitting} className="btn btn-primary">
           {submitting ? t("loading") : t("login")}
         </button>
-      </form>
-    </section>
+        </form>
+      </section>
+    </main>
   );
 }

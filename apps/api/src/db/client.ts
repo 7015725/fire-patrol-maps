@@ -25,6 +25,11 @@ export function createDb(sqlitePath = env.SQLITE_PATH) {
 
 export type Db = ReturnType<typeof createDb>;
 
+/** Close a database opened by createDb (primarily for short-lived CLI/test use). */
+export function closeDb(db: Db): void {
+  db.$client.close();
+}
+
 let cached: Db | undefined;
 let cachedPath: string | undefined;
 

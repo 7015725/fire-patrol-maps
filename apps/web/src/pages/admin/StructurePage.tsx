@@ -292,7 +292,7 @@ export function StructurePage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: "1rem" }}>
+    <section className="admin-page">
       <div className="page-header">
         <h1>{t("structure")}</h1>
         <p className="hint">
@@ -539,7 +539,7 @@ const toggleStyle: CSSProperties = {
 
 const metaStyle: CSSProperties = {
   fontWeight: 400,
-  color: "#888",
+  color: "var(--text-3)",
   fontSize: "0.8rem",
   marginLeft: 6,
 };
@@ -548,6 +548,6 @@ const sectionLabelStyle: CSSProperties = {
   fontSize: "0.75rem",
   textTransform: "uppercase",
   letterSpacing: "0.04em",
-  color: "#666",
+  color: "var(--text-2)",
   marginBottom: 6,
 };

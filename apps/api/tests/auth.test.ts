@@ -203,4 +203,28 @@ describe("auth", () => {
     });
     expect(limited.status).toBe(429);
   });
+
+  it("does not let forged forwarded addresses bypass the per-user limit", async () => {
+    for (let i = 0; i < 20; i++) {
+      const res = await app.request("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-forwarded-for": `203.0.113.${i}`,
+        },
+        body: JSON.stringify({ username: TEST_USERNAME, password: "wrong" }),
+      });
+      expect(res.status).toBe(401);
+    }
+
+    const limited = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-forwarded-for": "198.51.100.1",
+      },
+      body: JSON.stringify({ username: TEST_USERNAME, password: "wrong" }),
+    });
+    expect(limited.status).toBe(429);
+  });
 });

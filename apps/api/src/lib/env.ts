@@ -139,8 +139,6 @@ export function ensureConfigFileWritten(): void {
       `# Written automatically on first start at ${new Date().toISOString()}`,
       `SESSION_SECRET=${env.SESSION_SECRET}`,
       `COOKIE_SECURE=${env.COOKIE_SECURE ? "true" : "false"}`,
-      `ADMIN_BOOTSTRAP_USERNAME=${env.ADMIN_BOOTSTRAP_USERNAME}`,
-      `ADMIN_BOOTSTRAP_PASSWORD=${env.ADMIN_BOOTSTRAP_PASSWORD}`,
       `SQLITE_PATH=${env.SQLITE_PATH}`,
       `UPLOAD_DIR=${env.UPLOAD_DIR}`,
       "",

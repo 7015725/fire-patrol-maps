@@ -219,7 +219,7 @@ export function PresetsPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: "1rem" }}>
+    <section className="admin-page">
       <div className="page-header">
         <h1>{t("layerPresets")}</h1>
         <p className="hint">{t("presetsHint")}</p>
@@ -238,6 +238,7 @@ export function PresetsPage() {
             <span>{t("presetNameZh")}</span>
             <input
               type="text"
+              className="input"
               value={newZh}
               maxLength={40}
               onChange={(e) => setNewZh(e.target.value)}
@@ -248,6 +249,7 @@ export function PresetsPage() {
             <span>{t("presetNameEn")}</span>
             <input
               type="text"
+              className="input"
               value={newEn}
               maxLength={40}
               onChange={(e) => setNewEn(e.target.value)}
@@ -333,6 +335,7 @@ export function PresetsPage() {
                     <span>{t("presetNameZh")}</span>
                     <input
                       type="text"
+                      className="input"
                       value={names.nameZh}
                       maxLength={40}
                       disabled={busy}
@@ -344,6 +347,7 @@ export function PresetsPage() {
                     <span>{t("presetNameEn")}</span>
                     <input
                       type="text"
+                      className="input"
                       value={names.nameEn}
                       maxLength={40}
                       disabled={busy}

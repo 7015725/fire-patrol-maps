@@ -1,6 +1,7 @@
 {
   "appTitle": "消防巡查地图",
   "campuses": "园区",
+  "campusCount": "{{count}} 个已发布园区",
   "buildings": "楼宇",
   "floors": "楼层",
   "emptyCampuses": "暂无已发布的园区",

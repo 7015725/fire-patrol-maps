@@ -1,6 +1,7 @@
 {
   "appTitle": "Facility Safety Maps",
   "campuses": "Campuses",
+  "campusCount": "{{count}} published campus",
   "buildings": "Buildings",
   "floors": "Floors",
   "emptyCampuses": "No campuses published",

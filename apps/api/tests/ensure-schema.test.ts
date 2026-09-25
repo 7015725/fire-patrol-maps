@@ -5,7 +5,7 @@ import Database from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
 import { ensureSchemaCompat } from "../src/db/ensure-schema.js";
 import { runMigrations } from "../src/db/migrate.js";
-import { createDb } from "../src/db/client.js";
+import { closeDb, createDb } from "../src/db/client.js";
 import { createApp } from "../src/app.js";
 import { campuses } from "../src/db/schema.js";
 
@@ -109,6 +109,7 @@ describe("ensureSchemaCompat", () => {
         }),
       ]),
     );
+    closeDb(db);
   });
 
   it("is a no-op on a freshly migrated 0.3 schema", () => {
@@ -162,6 +163,7 @@ describe("ensureSchemaCompat", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.campuses.length).toBeGreaterThanOrEqual(2);
+    closeDb(db);
   });
 
   it("adds feature_media table when missing on an otherwise current schema", () => {

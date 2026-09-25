@@ -69,7 +69,7 @@ export function UsersPage() {
   const enabledCount = users.filter((u) => !u.disabled).length;
 
   return (
-    <section style={{ display: "grid", gap: "1rem" }}>
+    <section className="admin-page">
       <div className="page-header">
         <h1>{t("users")}</h1>
         <p className="hint">{t("usersHint")}</p>
@@ -116,7 +116,7 @@ export function UsersPage() {
             <li key={user.id} className="list-item" style={{ justifyContent: "space-between" }}>
               <div>
                 <div style={{ fontWeight: 600 }}>{user.username}</div>
-                <div style={{ fontSize: "0.8rem", color: "#666" }}>
+                <div style={{ fontSize: "0.8rem", color: "var(--text-2)" }}>
                   {user.disabled ? t("disabled") : t("enabled")}
                   {isLastEnabledAdmin ? ` — ${t("lastAdminCannotDisable")}` : null}
                 </div>

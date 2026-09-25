@@ -300,6 +300,21 @@ describe("admin hierarchy CRUD + plan upload", () => {
     expect(fileRes.headers.get("content-type")).toMatch(/image\/png/);
   });
 
+  it("rejects detaching a floor from its building in a full hierarchy campus", async () => {
+    const floorId = plannedFloorId;
+    expect(floorId).toBeTruthy();
+
+    const res = await app.request(`/api/admin/floors/${floorId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({ buildingId: null }),
+    });
+    expect(res.status).toBe(400);
+
+    const [floor] = await db.select().from(floors).where(eq(floors.id, floorId!)).limit(1);
+    expect(floor?.buildingId).toBe(createdBuildingIds[0]);
+  });
+
   it("upserts plan on second upload", async () => {
     const floorId = plannedFloorId;
     expect(floorId).toBeTruthy();

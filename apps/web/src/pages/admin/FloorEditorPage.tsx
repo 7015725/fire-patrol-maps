@@ -493,7 +493,7 @@ export function FloorEditorPage() {
   const cursor = tool === "select" ? "grab" : "crosshair";
 
   return (
-    <section className="stack">
+    <section className="stack admin-editor">
       <div className="row">
         <Link to="/admin" className="small">
           ← {t("structure")}
@@ -818,4 +818,3 @@ export function FloorEditorPage() {
     </section>
   );
 }
-

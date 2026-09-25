@@ -183,26 +183,6 @@ export function adminFloorsRoutes(getDb: () => Db) {
       return c.json({ error: "楼层不存在" }, 404);
     }
 
-    const [campus] = await db
-      .select()
-      .from(campuses)
-      .where(eq(campuses.id, existing.campusId))
-      .limit(1);
-    if (!campus) {
-      return c.json({ error: "园区不存在" }, 404);
-    }
-
-    const mode = parseHierarchyMode(campus.hierarchyMode);
-    if (mode === "single_map") {
-      // Allow rename of the single map floor only (name/slug/level/sort)
-      if (parsed.data.buildingId !== undefined || parsed.data.campusId !== undefined) {
-        return c.json(
-          { error: "单张地图园区的楼层不能变更归属" },
-          400,
-        );
-      }
-    }
-
     const updates: Partial<{
       buildingId: string | null;
       campusId: string;
@@ -221,27 +201,61 @@ export function adminFloorsRoutes(getDb: () => Db) {
       updates.slug = parsed.data.slug.trim();
     }
 
-    if (parsed.data.campusId !== undefined) {
-      updates.campusId = parsed.data.campusId;
-    }
-    if (parsed.data.buildingId !== undefined) {
-      updates.buildingId = parsed.data.buildingId;
-    }
+    const requestedBuildingId =
+      parsed.data.buildingId === undefined ? existing.buildingId : parsed.data.buildingId;
+    const requestedCampusId = parsed.data.campusId ?? existing.campusId;
+    let targetCampusId = requestedCampusId;
 
-    if (Object.keys(updates).length === 0) {
-      return c.json({ error: "没有需要更新的字段" }, 400);
-    }
-
-    if (updates.buildingId) {
+    if (requestedBuildingId) {
       const [building] = await db
         .select({ id: buildings.id, campusId: buildings.campusId })
         .from(buildings)
-        .where(eq(buildings.id, updates.buildingId))
+        .where(eq(buildings.id, requestedBuildingId))
         .limit(1);
       if (!building) {
         return c.json({ error: "楼宇不存在" }, 404);
       }
-      updates.campusId = building.campusId;
+      if (parsed.data.campusId !== undefined && parsed.data.campusId !== building.campusId) {
+        return c.json({ error: "campusId 与楼宇不匹配" }, 400);
+      }
+      targetCampusId = building.campusId;
+    }
+
+    const [targetCampus] = await db
+      .select()
+      .from(campuses)
+      .where(eq(campuses.id, targetCampusId))
+      .limit(1);
+    if (!targetCampus) {
+      return c.json({ error: "园区不存在" }, 404);
+    }
+
+    const targetMode = parseHierarchyMode(targetCampus.hierarchyMode);
+    if (requestedBuildingId) {
+      if (targetMode !== "full") {
+        return c.json({ error: "目标园区不允许楼宇层级" }, 400);
+      }
+    } else {
+      if (targetMode === "full") {
+        return c.json({ error: "完整层级园区必须提供 buildingId" }, 400);
+      }
+      if (targetMode === "single_map") {
+        const [otherFloor] = await db
+          .select({ id: floors.id })
+          .from(floors)
+          .where(and(eq(floors.campusId, targetCampusId), isNull(floors.buildingId)))
+          .limit(2);
+        if (otherFloor && otherFloor.id !== id) {
+          return c.json({ error: "单张地图园区只能有一个地图楼层" }, 400);
+        }
+      }
+    }
+
+    if (targetCampusId !== existing.campusId) updates.campusId = targetCampusId;
+    if (requestedBuildingId !== existing.buildingId) updates.buildingId = requestedBuildingId;
+
+    if (Object.keys(updates).length === 0) {
+      return c.json({ error: "没有需要更新的字段" }, 400);
     }
 
     try {

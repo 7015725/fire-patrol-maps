@@ -6,8 +6,8 @@ export function Layout() {
   const { t } = useTranslation();
 
   return (
-    <div className="shell">
-      <header className="topbar">
+    <div className="shell public-shell">
+      <header className="topbar site-header">
         <div className="topbar-left">
           <Link to="/" className="brand">
             {t("appTitle")}

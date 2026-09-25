@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Db } from "../../db/client.js";
 import { adminUsers } from "../../db/schema.js";
-import { hashPassword } from "../../lib/passwords.js";
+import { hashPassword, MIN_ADMIN_PASSWORD_LENGTH } from "../../lib/passwords.js";
 import {
   requireAdmin,
   type AdminVariables,
@@ -11,12 +11,12 @@ import {
 
 const createSchema = z.object({
   username: z.string().min(1),
-  password: z.string().min(1),
+  password: z.string().min(MIN_ADMIN_PASSWORD_LENGTH),
 });
 
 const patchSchema = z.object({
   disabled: z.boolean().optional(),
-  password: z.string().min(1).optional(),
+  password: z.string().min(MIN_ADMIN_PASSWORD_LENGTH).optional(),
 });
 
 function publicAdminUser(user: {
