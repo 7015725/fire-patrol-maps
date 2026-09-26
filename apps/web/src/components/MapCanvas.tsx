@@ -52,6 +52,23 @@ export type MapCanvasProps = {
   editable?: boolean;
   onGeometryChange?: (featureId: string, geometry: FeatureGeometry) => void;
   onGeometryCommit?: (featureId: string, geometry: FeatureGeometry) => void;
+  /**
+   * Pending (unconfirmed) draft geometry. Rendered with a dashed style plus a
+   * floating action bar (cancel / move / edit / confirm) anchored below it.
+   * Nothing is saved until the host commits it.
+   */
+  pendingGeometry?: FeatureGeometry | null;
+  /** Feature type key for pending marker color. */
+  pendingType?: string;
+  /** When true, the pending draft can be dragged/reshaped. Toggled by the move button. */
+  pendingMovable?: boolean;
+  onPendingGeometryChange?: (geometry: FeatureGeometry) => void;
+  onPendingGeometryCommit?: (geometry: FeatureGeometry) => void;
+  onPendingCancel?: () => void;
+  onPendingToggleMove?: () => void;
+  onPendingEdit?: () => void;
+  onPendingConfirm?: () => void;
+  pendingLabels?: { cancel: string; move: string; edit: string; confirm: string };
 };
 
 type ViewState = {
@@ -71,6 +88,143 @@ const MAX_SCALE = 8;
 
 function distanceBetween(a: PointerSample, b: PointerSample): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function PendingDraftOverlay({
+  geometry,
+  color,
+  stroke,
+  dash,
+  markerTransform,
+  planAspect,
+  movable,
+  onDrag,
+}: {
+  geometry: FeatureGeometry;
+  color: string;
+  stroke: number;
+  dash: string;
+  markerTransform: string;
+  planAspect: number;
+  movable: boolean;
+  onDrag: (ev: ReactPointerEvent, kind: "point" | "polygon" | "circle" | "radius" | "vertex", extra?: { vertexIndex?: number }) => void;
+}) {
+  const cursor = movable ? "move" : "default";
+  if (geometry.type === "point") {
+    return (
+      <button
+        type="button"
+        aria-label="Pending marker"
+        onPointerDown={(ev) => onDrag(ev, "point")}
+        style={{
+          position: "absolute",
+          left: `${geometry.x * 100}%`,
+          top: `${geometry.y * 100}%`,
+          transform: markerTransform,
+          width: 24,
+          height: 24,
+          borderRadius: "50%",
+          border: "3px dashed #111",
+          background: color,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
+          padding: 0,
+          cursor: movable ? "grab" : "default",
+          zIndex: 10000,
+        }}
+      />
+    );
+  }
+  if (geometry.type === "circle") {
+    const { rx, ry } = circleRadii(geometry.r, planAspect);
+    return (
+      <div style={{ position: "absolute", inset: 0, zIndex: 10000, pointerEvents: "none" }}>
+        <svg
+          viewBox="0 0 1 1"
+          preserveAspectRatio="none"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}
+        >
+          <ellipse
+            cx={geometry.x}
+            cy={geometry.y}
+            rx={rx}
+            ry={ry}
+            fill={color}
+            fillOpacity={0.22}
+            stroke={color}
+            strokeWidth={stroke}
+            strokeDasharray={dash}
+            style={{ pointerEvents: "auto", cursor }}
+            onPointerDown={(ev) => onDrag(ev, "circle")}
+          />
+        </svg>
+        {movable ? (
+          <button
+            type="button"
+            aria-label="Resize pending circle"
+            onPointerDown={(ev) => onDrag(ev, "radius")}
+            style={{
+              position: "absolute",
+              left: `${(geometry.x + geometry.r) * 100}%`,
+              top: `${geometry.y * 100}%`,
+              transform: markerTransform,
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              border: "2px solid #111",
+              background: "#fff",
+              padding: 0,
+              cursor: "ew-resize",
+              zIndex: 10001,
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <div style={{ position: "absolute", inset: 0, zIndex: 10000, pointerEvents: "none" }}>
+      <svg
+        viewBox="0 0 1 1"
+        preserveAspectRatio="none"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}
+      >
+        <polygon
+          points={geometry.points.map(([px, py]) => `${px},${py}`).join(" ")}
+          fill={color}
+          fillOpacity={0.22}
+          stroke={color}
+          strokeWidth={stroke}
+          strokeDasharray={dash}
+          style={{ pointerEvents: "auto", cursor }}
+          onPointerDown={(ev) => onDrag(ev, "polygon")}
+        />
+      </svg>
+      {movable
+        ? geometry.points.map(([px, py], i) => (
+            <button
+              key={`pending-v-${i}`}
+              type="button"
+              aria-label={`Pending vertex ${i + 1}`}
+              onPointerDown={(ev) => onDrag(ev, "vertex", { vertexIndex: i })}
+              style={{
+                position: "absolute",
+                left: `${px * 100}%`,
+                top: `${py * 100}%`,
+                transform: markerTransform,
+                width: 14,
+                height: 14,
+                borderRadius: 2,
+                border: "2px solid #111",
+                background: "#fff",
+                padding: 0,
+                cursor: "nwse-resize",
+                zIndex: 10001,
+              }}
+            />
+          ))
+        : null}
+    </div>
+  );
 }
 
 function midpoint(a: PointerSample, b: PointerSample): { x: number; y: number } {
@@ -94,6 +248,16 @@ export function MapCanvas({
   editable = false,
   onGeometryChange,
   onGeometryCommit,
+  pendingGeometry = null,
+  pendingType = "exit",
+  pendingMovable = true,
+  onPendingGeometryChange,
+  onPendingGeometryCommit,
+  onPendingCancel,
+  onPendingToggleMove,
+  onPendingEdit,
+  onPendingConfirm,
+  pendingLabels,
 }: MapCanvasProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const planBoxRef = useRef<HTMLDivElement>(null);
@@ -108,6 +272,16 @@ export function MapCanvas({
   onGeometryChangeRef.current = onGeometryChange;
   const onGeometryCommitRef = useRef(onGeometryCommit);
   onGeometryCommitRef.current = onGeometryCommit;
+  const onPendingChangeRef = useRef(onPendingGeometryChange);
+  onPendingChangeRef.current = onPendingGeometryChange;
+  const onPendingCommitRef = useRef(onPendingGeometryCommit);
+  onPendingCommitRef.current = onPendingGeometryCommit;
+  const pendingGeometryRef = useRef(pendingGeometry);
+  pendingGeometryRef.current = pendingGeometry;
+  const pendingMovableRef = useRef(pendingMovable);
+  pendingMovableRef.current = pendingMovable;
+  /** Sentinel feature id marking a geometry drag on the unconfirmed draft. */
+  const PENDING_ID = "__pending__";
   type GeomDrag =
     | {
         kind: "point" | "polygon" | "circle" | "radius";
@@ -229,10 +403,36 @@ export function MapCanvas({
         };
       }
 
-      if (next) onGeometryChangeRef.current?.(drag.featureId, next);
+      if (next) {
+        if (drag.featureId === PENDING_ID) onPendingChangeRef.current?.(next);
+        else onGeometryChangeRef.current?.(drag.featureId, next);
+      }
       return next;
     },
     [clientToPlan, planAspect],
+  );
+
+  const beginPendingDrag = useCallback(
+    (ev: ReactPointerEvent, kind: GeomDrag["kind"], extra?: { vertexIndex?: number }) => {
+      // Pending drag bypasses editable: the draft molds itself only via the action bar.
+      const origin = pendingGeometryRef.current;
+      if (!origin || !pendingMovableRef.current) return;
+      ev.stopPropagation();
+      ev.preventDefault();
+      const start = clientToPlan(ev.clientX, ev.clientY);
+      if (!start) return;
+      geomDragRef.current = {
+        kind,
+        featureId: PENDING_ID,
+        pointerId: ev.pointerId,
+        startX: start.x,
+        startY: start.y,
+        origin,
+        ...(kind === "vertex" ? { vertexIndex: extra?.vertexIndex ?? 0 } : {}),
+      } as GeomDrag;
+      viewportRef.current?.setPointerCapture(ev.pointerId);
+    },
+    [clientToPlan],
   );
 
   const beginGeomDrag = useCallback(
@@ -398,7 +598,10 @@ export function MapCanvas({
       const geomDrag = geomDragRef.current;
       if (geomDrag && geomDrag.pointerId === e.pointerId) {
         const next = applyGeomDrag(e.clientX, e.clientY);
-        if (next) onGeometryCommitRef.current?.(geomDrag.featureId, next);
+        if (next) {
+          if (geomDrag.featureId === PENDING_ID) onPendingCommitRef.current?.(next);
+          else onGeometryCommitRef.current?.(geomDrag.featureId, next);
+        }
         geomDragRef.current = null;
         pointersRef.current.delete(e.pointerId);
         try {
@@ -487,6 +690,41 @@ export function MapCanvas({
   const draftStroke = screenSpacePlanUnits(0.006, view.scale);
   const draftVertexR = screenSpacePlanUnits(0.012, view.scale);
   const draftDash = `${screenSpacePlanUnits(0.02, view.scale)} ${screenSpacePlanUnits(0.01, view.scale)}`;
+  const pendingColor = colorForType(pendingType);
+  const pendingStroke = screenSpacePlanUnits(0.008, view.scale);
+  const pendingValid = pendingGeometry
+    ? (pendingGeometry.type === "point" ||
+      pendingGeometry.type === "circle" ||
+      (pendingGeometry.type === "polygon" && pendingGeometry.points.length >= 3))
+    : false;
+  /** Screen-anchor for the floating action bar: below the pending draft. */
+  const pendingAnchor: { x: number; y: number } | null = pendingGeometry
+    ? pendingGeometry.type === "point"
+      ? { x: pendingGeometry.x, y: pendingGeometry.y }
+      : pendingGeometry.type === "circle"
+        ? { x: pendingGeometry.x, y: Math.min(1, pendingGeometry.y + circleRadii(pendingGeometry.r, planAspect).ry) }
+        : pendingGeometry.points.length > 0
+          ? {
+              x: pendingGeometry.points.reduce((s, p) => s + p[0], 0) / pendingGeometry.points.length,
+              y: Math.min(1, Math.max(...pendingGeometry.points.map((p) => p[1]))),
+            }
+          : null
+    : null;
+  const pendingBelow = pendingAnchor ? pendingAnchor.y < 0.8 : true;
+  /**
+   * Toolbar follows map zoom but clamped: parent layer already scales by
+   * view.scale, so apply a local counter-scale that keeps the clamped feel.
+   * Visual size = 30px * clamp(view.scale, 0.8, 1.75).
+   */
+  const pendingUiScale = view.scale > 0 ? Math.min(1.75, Math.max(0.8, view.scale)) / view.scale : 1;
+  const pendingActions = pendingLabels
+    ? [
+        { key: "cancel" as const, label: pendingLabels.cancel, title: pendingLabels.cancel, glyph: "✕" },
+        { key: "move" as const, label: pendingLabels.move, title: pendingLabels.move, glyph: "✥" },
+        { key: "edit" as const, label: pendingLabels.edit, title: pendingLabels.edit, glyph: "✎" },
+        { key: "confirm" as const, label: pendingLabels.confirm, title: pendingLabels.confirm, glyph: "✓" },
+      ]
+    : [];
 
   return (
     <div
@@ -819,6 +1057,86 @@ export function MapCanvas({
                 strokeDasharray={draftDash}
               />
             </svg>
+          ) : null}
+
+          {pendingGeometry ? (
+            <PendingDraftOverlay
+              geometry={pendingGeometry}
+              color={pendingColor}
+              stroke={pendingStroke}
+              dash={draftDash}
+              markerTransform={markerTransform}
+              planAspect={planAspect}
+              movable={pendingMovable}
+              onDrag={beginPendingDrag}
+            />
+          ) : null}
+
+          {pendingAnchor && pendingActions.length > 0 ? (
+            <div
+              role="toolbar"
+              aria-label="Pending feature actions"
+              onPointerDown={(ev) => ev.stopPropagation()}
+              onClick={(ev) => ev.stopPropagation()}
+              style={{
+                position: "absolute",
+                left: `${pendingAnchor.x * 100}%`,
+                top: `${pendingAnchor.y * 100}%`,
+                // Center first, then scale about the anchored edge so the
+                // -50%/-100% offsets never get multiplied by the zoom factor.
+                transform: pendingBelow
+                  ? `translate(-50%, 0) scale(${pendingUiScale})`
+                  : `translate(-50%, -100%) scale(${pendingUiScale})`,
+                marginTop: pendingBelow ? 14 : -14,
+                display: "flex",
+                gap: 6,
+                zIndex: 10001,
+                background: "rgba(255,255,255,0.97)",
+                border: "1px solid #e2e2e5",
+                borderRadius: 999,
+                padding: "4px 6px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                transformOrigin: pendingBelow ? "top center" : "bottom center",
+              }}
+            >
+              {pendingActions.map((action) => (
+                <button
+                  key={action.key}
+                  type="button"
+                  title={action.title}
+                  aria-label={action.label}
+                  aria-pressed={action.key === "move" ? pendingMovable : undefined}
+                  disabled={action.key === "confirm" && !pendingValid}
+                  onPointerDown={(ev) => ev.stopPropagation()}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    if (action.key === "cancel") onPendingCancel?.();
+                    else if (action.key === "move") onPendingToggleMove?.();
+                    else if (action.key === "edit") onPendingEdit?.();
+                    else onPendingConfirm?.();
+                  }}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    border:
+                      action.key === "move" && pendingMovable
+                        ? "2px solid #111"
+                        : "1px solid #d4d4d8",
+                    background: action.key === "confirm" ? "#16a34a" : "#fff",
+                    color: action.key === "confirm" ? "#fff" : action.key === "cancel" ? "#dc2626" : "#111",
+                    opacity: action.key === "confirm" && !pendingValid ? 0.45 : 1,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    lineHeight: "28px",
+                    padding: 0,
+                    cursor: action.key === "confirm" && !pendingValid ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {action.glyph}
+                </button>
+              ))}
+            </div>
           ) : null}
         </div>
       </div>

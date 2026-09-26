@@ -135,6 +135,8 @@
     "circle": "圆形"
   },
   "inspectionMode": "月检模式",
+  "inspectionExit": "退出月检",
+  "inspectionModeHint": "月检中：绘制工具已隐藏，标记不可拖动；点标记只做巡检打勾。退出后回编辑。",
   "startInspection": "开始月检",
   "inspectionModeOn": "月检中",
   "inspectionProgress": "本月已检 {{inspected}} / {{total}}",
@@ -155,5 +157,13 @@
   "inspectionFilterFault": "只看异常",
   "inspectionFilterUninspected": "只看未检",
   "inspectionEmpty": "本月暂无巡检记录",
+  "pendingHint": "已放入待确认标记：拖动调整位置或形状，下方按钮取消 / 移动 / 编辑 / 确认。",
+  "drawToolHint": "绘制工具已选中：点空白处落笔新建；点中已有标记会自动跳回“选择”并打开编辑。",
+  "pendingMove": "移动",
+  "pendingEdit": "编辑",
+  "pendingConfirm": "确认",
+  "pendingDialogTitle": "待确认标记信息",
+  "pendingEditTitle": "编辑待确认标记",
+  "pendingConfirmTitle": "确认新建标记",
   "errorSave": "保存失败，请重试。"
 }

@@ -135,6 +135,8 @@
     "circle": "Circle"
   },
   "inspectionMode": "Inspection mode",
+  "inspectionExit": "Exit inspection",
+  "inspectionModeHint": "Inspecting: drawing tools are hidden and markers are locked; taps only mark inspections. Exit to edit.",
   "startInspection": "Start inspection",
   "inspectionModeOn": "Inspecting",
   "inspectionProgress": "Inspected {{inspected}} / {{total}} this month",
@@ -155,5 +157,13 @@
   "inspectionFilterFault": "Faults only",
   "inspectionFilterUninspected": "Uninspected only",
   "inspectionEmpty": "No inspection records this month",
+  "pendingHint": "Pending marker placed: drag to adjust, then cancel / move / edit / confirm below it.",
+  "drawToolHint": "Draw tool active: tap empty space to create; tapping an existing marker jumps back to Select with its editor.",
+  "pendingMove": "Move",
+  "pendingEdit": "Edit",
+  "pendingConfirm": "Confirm",
+  "pendingDialogTitle": "Pending marker details",
+  "pendingEditTitle": "Edit pending marker",
+  "pendingConfirmTitle": "Confirm new marker",
   "errorSave": "Save failed, please retry."
 }

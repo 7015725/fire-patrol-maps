@@ -46,6 +46,19 @@ export function FloorEditorPage() {
   } | null>(null);
   const [draftPoints, setDraftPoints] = useState<[number, number][]>([]);
   const [savedFlash, setSavedFlash] = useState(false);
+  /** Unconfirmed new-feature draft: shown on the map with an action bar, saved only on confirm. */
+  const [pending, setPending] = useState<{
+    geometry: FeatureGeometry;
+    movable: boolean;
+    draftType: string;
+    draftLabel: string;
+    draftNotes: string;
+  } | null>(null);
+  /** Info dialog over a pending draft: stage (edit) only stores, commit (confirm) persists. */
+  const [pendingDialog, setPendingDialog] = useState<{ mode: "stage" | "commit" } | null>(null);
+  const [dialogType, setDialogType] = useState<string>("exit");
+  const [dialogLabel, setDialogLabel] = useState("");
+  const [dialogNotes, setDialogNotes] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -90,6 +103,8 @@ export function FloorEditorPage() {
     setSelected(null);
     selectedIdRef.current = null;
     setDraftPointsSynced([]);
+    setPending(null);
+    setPendingDialog(null);
     setError(null);
     loadFloor().catch((err: unknown) => {
       if (!cancelled) {
@@ -188,6 +203,8 @@ export function FloorEditorPage() {
   const onPlanClick = useCallback(
     async (coords: { x: number; y: number }) => {
       if (!floorId || !floor) return;
+      // One draft at a time: finish or cancel the pending marker first.
+      if (pending) return;
 
       if (tool === "select") {
         setSelected(null);
@@ -195,23 +212,14 @@ export function FloorEditorPage() {
       }
 
       if (tool === "pin") {
-        setSaving(true);
-        setError(null);
-        try {
-          const created = await api.createFeature({
-            floorId,
-            type: featureType,
-            geometry: { type: "point", x: coords.x, y: coords.y },
-            label: nextAutoLabel(featureType),
-            sortOrder: nextSortOrder(),
-          });
-          addFeature(created);
-          flashSaved();
-        } catch (err: unknown) {
-          setError(err instanceof Error ? err.message : t("errorLoad"));
-        } finally {
-          setSaving(false);
-        }
+        setSelected(null);
+        setPending({
+          geometry: { type: "point", x: coords.x, y: coords.y },
+          movable: true,
+          draftType: featureType,
+          draftLabel: nextAutoLabel(featureType),
+          draftNotes: "",
+        });
         return;
       }
 
@@ -223,24 +231,15 @@ export function FloorEditorPage() {
         }
         const points = rectanglePoints(current[0], [coords.x, coords.y]);
         if (!points) return;
-        setSaving(true);
-        setError(null);
-        try {
-          const created = await api.createFeature({
-            floorId,
-            type: featureType,
-            geometry: { type: "polygon", points },
-            label: nextAutoLabel(featureType),
-            sortOrder: nextSortOrder(),
-          });
-          addFeature(created);
-          setDraftPointsSynced([]);
-          flashSaved();
-        } catch (err: unknown) {
-          setError(err instanceof Error ? err.message : t("errorLoad"));
-        } finally {
-          setSaving(false);
-        }
+        setSelected(null);
+        setDraftPointsSynced([]);
+        setPending({
+          geometry: { type: "polygon", points },
+          movable: true,
+          draftType: featureType,
+          draftLabel: nextAutoLabel(featureType),
+          draftNotes: "",
+        });
         return;
       }
 
@@ -257,24 +256,15 @@ export function FloorEditorPage() {
             ? plan.width / plan.height
             : 4 / 3;
         const r = radiusFromCenter(cx, cy, coords.x, coords.y, aspect);
-        setSaving(true);
-        setError(null);
-        try {
-          const created = await api.createFeature({
-            floorId,
-            type: featureType,
-            geometry: { type: "circle", x: cx, y: cy, r },
-            label: nextAutoLabel(featureType),
-            sortOrder: nextSortOrder(),
-          });
-          addFeature(created);
-          setDraftPointsSynced([]);
-          flashSaved();
-        } catch (err: unknown) {
-          setError(err instanceof Error ? err.message : t("errorLoad"));
-        } finally {
-          setSaving(false);
-        }
+        setSelected(null);
+        setDraftPointsSynced([]);
+        setPending({
+          geometry: { type: "circle", x: cx, y: cy, r },
+          movable: true,
+          draftType: featureType,
+          draftLabel: nextAutoLabel(featureType),
+          draftNotes: "",
+        });
         return;
       }
 
@@ -287,36 +277,33 @@ export function FloorEditorPage() {
         setDraftPoints(next);
       }
     },
-    [floor, floorId, tool, featureType, flashSaved, t, setDraftPointsSynced],
+    [floor, floorId, tool, featureType, pending, setDraftPointsSynced],
   );
 
-  const completePolygon = useCallback(async () => {
+  const completePolygon = useCallback(() => {
     // Read from ref so double-click sees the latest vertices even if a click
     // just updated draftPoints and React state has not re-rendered yet.
     const points = draftPointsRef.current;
-    if (!floorId || points.length < 3) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const created = await api.createFeature({
-        floorId,
-        type: featureType,
-        geometry: { type: "polygon", points },
-        label: nextAutoLabel(featureType),
-        sortOrder: nextSortOrder(),
-      });
-      addFeature(created);
-      setDraftPointsSynced([]);
-      flashSaved();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t("errorLoad"));
-    } finally {
-      setSaving(false);
-    }
-  }, [floorId, featureType, flashSaved, t, setDraftPointsSynced]);
+    if (!floorId || points.length < 3 || pending) return;
+    setSelected(null);
+    setDraftPointsSynced([]);
+    setPending({
+      geometry: { type: "polygon", points },
+      movable: true,
+      draftType: featureType,
+      draftLabel: nextAutoLabel(featureType),
+      draftNotes: "",
+    });
+  }, [floorId, featureType, pending, setDraftPointsSynced]);
+
+  function cancelDraft() {
+    setDraftPointsSynced([]);
+    setPending(null);
+    setPendingDialog(null);
+  }
 
   function cancelPolygon() {
-    setDraftPointsSynced([]);
+    cancelDraft();
   }
 
   function nextSortOrder(): number {
@@ -510,11 +497,80 @@ export function FloorEditorPage() {
   }
 
   function onSelectFeature(feature: MapFeature | null) {
+    // A pending draft owns the map until it is confirmed or cancelled.
+    if (pending || inspectionMode) {
+      if (feature && tool !== "select") {
+        // Drawing tool tapped an existing marker: fall back to Select so the
+        // edit panel opens, and say so explicitly.
+        setTool("select");
+        setDraftPointsSynced([]);
+        setSelected(feature);
+      }
+      return;
+    }
     if (tool !== "select" && feature) {
       // Selecting existing features is always allowed to open the edit panel
       setTool("select");
     }
     setSelected(feature);
+  }
+
+  function onDialogTypeChange(next: string) {
+    setDialogType(next);
+    // Smart numbering: switching the type always regenerates the label for that type.
+    setDialogLabel(nextAutoLabel(next));
+  }
+
+  function openPendingDialog(mode: "stage" | "commit") {
+    if (!pending) return;
+    setDialogType(pending.draftType);
+    setDialogLabel(pending.draftLabel);
+    setDialogNotes(pending.draftNotes);
+    setPendingDialog({ mode });
+  }
+
+  function closePendingDialog() {
+    setPendingDialog(null);
+  }
+
+  function savePendingDialog() {
+    if (!pending) return;
+    const label = dialogLabel.trim() || null;
+    const notes = dialogNotes.trim() || null;
+    const draft = { draftType: dialogType, draftLabel: dialogLabel, draftNotes: dialogNotes };
+    if (pendingDialog?.mode === "commit") {
+      void commitPending({ type: dialogType, label, notes });
+    } else {
+      setPending({ ...pending, ...draft });
+      setPendingDialog(null);
+    }
+  }
+
+  async function commitPending(info?: { type: string; label: string | null; notes: string | null }) {
+    if (!pending || !floorId) return;
+    const type = info?.type ?? pending.draftType;
+    const label = info ? info.label : pending.draftLabel.trim() || null;
+    const notes = info ? info.notes : pending.draftNotes.trim() || null;
+    setSaving(true);
+    setError(null);
+    try {
+      const created = await api.createFeature({
+        floorId,
+        type,
+        geometry: pending.geometry,
+        label,
+        notes,
+        sortOrder: nextSortOrder(),
+      });
+      addFeature(created);
+      setPending(null);
+      setPendingDialog(null);
+      flashSaved();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("errorLoad"));
+    } finally {
+      setSaving(false);
+    }
   }
 
   /** Refresh current-month inspection marks after mark/clear (single source: server). */
@@ -593,108 +649,140 @@ export function FloorEditorPage() {
       ) : null}
 
       <div className="card">
-        <div className="row row-tight" role="group" aria-label="Tools">
+        <div className="row row-tight" role="group" aria-label="Mode">
           {inspectionMode ? (
-            <span className="badge badge-ok">{t("inspectionModeOn")}</span>
-          ) : null}
-          {inspectionProgress && inspectionMode ? (
-            <span className="small muted">
-              {t("inspectionProgress", {
-                inspected: inspectionProgress.inspected,
-                total: inspectionProgress.total,
-              })}
-            </span>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => setInspectionMode((v) => !v)}
-            className={inspectionMode ? "tool-btn active" : "tool-btn"}
-          >
-            {t("inspectionMode")}
-          </button>
-          {inspectionMode ? (
-            <Link to="/admin/inspections" className="btn btn-sm">
-              {t("inspectionHistory")}
-            </Link>
-          ) : null}
-        </div>
-        <div className="row row-tight" role="group" aria-label="Draw tools">
-          {(["select", "pin", "rect", "polygon", "circle"] as Tool[]).map((value) => (
+            <>
+              <span className="badge badge-ok">{t("inspectionModeOn")}</span>
+              {inspectionProgress ? (
+                <span className="small muted">
+                  {t("inspectionProgress", {
+                    inspected: inspectionProgress.inspected,
+                    total: inspectionProgress.total,
+                  })}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setInspectionMode(false)}
+                className="tool-btn active"
+              >
+                {t("inspectionExit")}
+              </button>
+              <Link to="/admin/inspections" className="btn btn-sm">
+                {t("inspectionHistory")}
+              </Link>
+            </>
+          ) : (
             <button
-              key={value}
               type="button"
               onClick={() => {
-                if (value !== tool) setDraftPointsSynced([]);
-                setTool(value);
+                if (pending) return;
+                setTool("select");
+                setDraftPointsSynced([]);
+                setSelected(null);
+                setInspectionMode(true);
               }}
-              className={tool === value ? "tool-btn active" : "tool-btn"}
+              className="tool-btn"
+              disabled={Boolean(pending)}
             >
-              {t(`tools.${value}`)}
+              {t("inspectionMode")}
             </button>
-          ))}
+          )}
         </div>
+        {inspectionMode ? (
+          <p className="muted small">{t("inspectionModeHint")}</p>
+        ) : (
+          <>
+            <div className="row row-tight" role="group" aria-label="Draw tools">
+              {["select", "pin", "rect", "polygon", "circle"].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    if (pending) return;
+                    if (value !== tool) setDraftPointsSynced([]);
+                    setTool(value as Tool);
+                  }}
+                  className={tool === value ? "tool-btn active" : "tool-btn"}
+                  disabled={Boolean(pending)}
+                >
+                  {t(`tools.${value}`)}
+                </button>
+              ))}
+            </div>
 
-        <label className="row">
-          <span>{t("featureType")}</span>
-          <select
-            value={featureType}
-            onChange={(e) => setFeatureType(e.target.value as FeatureType)}
-            className="select"
-          >
-            {FEATURE_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {t(`featureTypes.${type}`)}
-              </option>
-            ))}
-          </select>
-        </label>
+            {tool !== "select" && !pending ? (
+              <p className="muted small">{t("drawToolHint")}</p>
+            ) : null}
 
-        <label className="row">
-          <span>{t("uploadPlan")}</span>
-          <input
-            type="file"
-            accept="image/svg+xml,image/png,image/jpeg,.svg,.png,.jpg,.jpeg"
-            onChange={onUploadPlan}
-            disabled={uploading}
-          />
-        </label>
+            {pending ? (
+              <p className="muted small">{t("pendingHint")}</p>
+            ) : null}
 
-        {tool === "circle" && draftPoints.length === 1 ? (
-          <div className="row row-tight">
-            <span className="muted small">{t("circleHint")}</span>
-            <button type="button" onClick={cancelPolygon} className="btn btn-sm">
-              {t("cancel")}
-            </button>
-          </div>
-        ) : null}
+            <label className="row">
+              <span>{t("featureType")}</span>
+              <select
+                value={featureType}
+                onChange={(e) => setFeatureType(e.target.value as FeatureType)}
+                className="select"
+                disabled={Boolean(pending)}
+              >
+                {FEATURE_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {t(`featureTypes.${type}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        {tool === "rect" && draftPoints.length === 1 ? (
-          <div className="row row-tight">
-            <span className="muted small">{t("rectHint")}</span>
-            <button type="button" onClick={cancelPolygon} className="btn btn-sm">
-              {t("cancel")}
-            </button>
-          </div>
-        ) : null}
+            <label className="row">
+              <span>{t("uploadPlan")}</span>
+              <input
+                type="file"
+                accept="image/svg+xml,image/png,image/jpeg,.svg,.png,.jpg,.jpeg"
+                onChange={onUploadPlan}
+                disabled={uploading}
+              />
+            </label>
 
-        {tool === "polygon" ? (
-          <div className="row row-tight">
-            <span className="muted small">
-              {draftPoints.length} {t("vertices")}
-            </span>
-            <button
-              type="button"
-              onClick={completePolygon}
-              disabled={draftPoints.length < 3 || saving}
-              className="btn btn-primary"
-            >
-              {t("complete")}
-            </button>
-            <button type="button" onClick={cancelPolygon} className="btn btn-sm">
-              {t("cancel")}
-            </button>
-          </div>
-        ) : null}
+            {tool === "circle" && draftPoints.length === 1 ? (
+              <div className="row row-tight">
+                <span className="muted small">{t("circleHint")}</span>
+                <button type="button" onClick={cancelPolygon} className="btn btn-sm">
+                  {t("cancel")}
+                </button>
+              </div>
+            ) : null}
+
+            {tool === "rect" && draftPoints.length === 1 ? (
+              <div className="row row-tight">
+                <span className="muted small">{t("rectHint")}</span>
+                <button type="button" onClick={cancelPolygon} className="btn btn-sm">
+                  {t("cancel")}
+                </button>
+              </div>
+            ) : null}
+
+            {tool === "polygon" ? (
+              <div className="row row-tight">
+                <span className="muted small">
+                  {draftPoints.length} {t("vertices")}
+                </span>
+                <button
+                  type="button"
+                  onClick={completePolygon}
+                  disabled={draftPoints.length < 3 || saving}
+                  className="btn btn-primary"
+                >
+                  {t("complete")}
+                </button>
+                <button type="button" onClick={cancelPolygon} className="btn btn-sm">
+                  {t("cancel")}
+                </button>
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
 
       {!floor.plan ? (
@@ -752,10 +840,99 @@ export function FloorEditorPage() {
                   : null
               }
               cursor={cursor}
-              editable
+              editable={!pending && !inspectionMode}
               onGeometryChange={applyLocalGeometry}
               onGeometryCommit={(id, geom) => void commitGeometry(id, geom)}
+              pendingGeometry={pending?.geometry ?? null}
+              pendingType={pending?.draftType ?? featureType}
+              pendingMovable={pending?.movable ?? true}
+              onPendingGeometryChange={(geom) =>
+                setPending((prev) => (prev ? { ...prev, geometry: geom } : prev))
+              }
+              onPendingGeometryCommit={(geom) =>
+                setPending((prev) => (prev ? { ...prev, geometry: geom } : prev))
+              }
+              onPendingCancel={() => cancelDraft()}
+              onPendingToggleMove={() =>
+                setPending((prev) => (prev ? { ...prev, movable: !prev.movable } : prev))
+              }
+              onPendingEdit={() => openPendingDialog("stage")}
+              onPendingConfirm={() => openPendingDialog("commit")}
+              pendingLabels={{
+                cancel: t("cancel"),
+                move: t("pendingMove"),
+                edit: t("pendingEdit"),
+                confirm: t("pendingConfirm"),
+              }}
             />
+            {pendingDialog && pending ? (
+              <div
+                role="dialog"
+                aria-label={t("pendingDialogTitle")}
+                className="popover feature-popup"
+                style={{
+                  position: "absolute",
+                  left: "0.75rem",
+                  right: "0.75rem",
+                  bottom: "0.75rem",
+                  zIndex: 10002,
+                  maxWidth: 420,
+                  margin: "0 auto",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+                  <strong>{t(pendingDialog.mode === "commit" ? "pendingConfirmTitle" : "pendingEditTitle")}</strong>
+                  <button type="button" onClick={closePendingDialog} aria-label={t("cancel")} className="btn btn-ghost btn-sm">
+                    ×
+                  </button>
+                </div>
+                <label className="label">
+                  <span>{t("featureType")}</span>
+                  <select
+                    value={dialogType}
+                    onChange={(e) => onDialogTypeChange(e.target.value)}
+                    className="select"
+                  >
+                    {FEATURE_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {t(`featureTypes.${type}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="label">
+                  <span>{t("label")}</span>
+                  <input
+                    value={dialogLabel}
+                    onChange={(e) => setDialogLabel(e.target.value)}
+                    className="input"
+                  />
+                </label>
+                <label className="label">
+                  <span>{t("notes")}</span>
+                  <textarea
+                    value={dialogNotes}
+                    onChange={(e) => setDialogNotes(e.target.value)}
+                    rows={3}
+                    className="input"
+                    style={{ resize: "vertical" }}
+                  />
+                </label>
+                <div className="row">
+                  <button type="button" onClick={closePendingDialog} className="btn btn-sm">
+                    {t("cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={savePendingDialog}
+                    disabled={saving}
+                    className="btn btn-primary btn-sm"
+                  >
+                    {t(pendingDialog.mode === "commit" ? "pendingConfirm" : "save")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
             <FeaturePopup
               feature={inspectionMode ? selected : null}
               onClose={() => setSelected(null)}
